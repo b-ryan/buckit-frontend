@@ -1,9 +1,9 @@
-(ns ^:figwheel-always buckit-frontend.core
+(ns ^:figwheel-always buckit.frontend.core
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [secretary.core :as secretary :refer-macros [defroute]]
             [goog.events :as events]
-            [buckit-frontend.views.buckit :refer [buckit-view]])
+            [buckit.frontend.views.buckit :refer [buckit-view]])
   (:import goog.History
            goog.History.EventType))
 

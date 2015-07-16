@@ -1,4 +1,4 @@
-(defproject buckit-frontend "0.1.0-SNAPSHOT"
+(defproject buckit/frontend "0.1.0-SNAPSHOT"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -22,9 +22,9 @@
     :builds [{:id "dev"
               :source-paths ["src"]
 
-              :figwheel { :on-jsload "buckit-frontend.core/on-js-reload" }
+              :figwheel { :on-jsload "buckit.frontend.core/on-js-reload" }
 
-              :compiler {:main buckit-frontend.core
+              :compiler {:main buckit.frontend.core
                          :asset-path "js/compiled/out"
                          :output-to "resources/public/js/compiled/buckit_frontend.js"
                          :output-dir "resources/public/js/compiled/out"
@@ -32,7 +32,7 @@
              {:id "min"
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/buckit_frontend.js"
-                         :main buckit-frontend.core
+                         :main buckit.frontend.core
                          :optimizations :advanced
                          :pretty-print false}}]}
 

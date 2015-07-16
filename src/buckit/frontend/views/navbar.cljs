@@ -1,4 +1,4 @@
-(ns ^:figwheel-always buckit-frontend.views.navbar
+(ns ^:figwheel-always buckit.frontend.views.navbar
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 

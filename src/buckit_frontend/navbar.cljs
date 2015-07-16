@@ -33,17 +33,17 @@
            (collapse-button)
            (brand)))
 
-(defn- inject-active-key [sections active-name]
-  (map #(if (= active-name (:name %))
+(defn- inject-active-key [sections active-section]
+  (map #(if (= active-section (:name %))
           (assoc % :active true)
           %)
        sections))
 
-(defn navbar-view [{:keys [sections active-name]} owner]
+(defn navbar-view [{:keys [sections active-section]} owner]
   (reify
     om/IRender
     (render [this]
       (dom/nav #js {:className "navbar navbar-default"}
                (dom/div #js {:className "container-fluid"}
                         (navbar-header)
-                        (links (inject-active-key sections active-name)))))))
+                        (links (inject-active-key sections active-section)))))))

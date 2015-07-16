@@ -1,25 +1,21 @@
 (ns ^:figwheel-always buckit-frontend.core
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [buckit-frontend.routing :refer [app-state]]
             [buckit-frontend.navbar :refer [navbar-view]]))
 
 (enable-console-print!)
-
-(defonce app-state
-  (atom {:text "Hello Buck!"
-         :navbar {:sections [{:name "Accounts"
-                              :href "/accounts"}
-                             {:name "Budget"
-                              :href "/budget"}]
-                  :active-name nil}}))
 
 (defn buckit [data owner]
   (reify
     om/IRender
     (render [this]
-      (om/build navbar-view (:navbar data)))))
+      (om/build navbar-view data))))
 
-(om/root buckit app-state {:target (. js/document (getElementById "buckit"))})
+(om/root buckit
+         app-state
+         {:target (. js/document
+                     (getElementById "buckit"))})
 
 
 (defn on-js-reload []

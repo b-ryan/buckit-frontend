@@ -22,7 +22,7 @@
     (dom/li #js {:className className}
             (dom/a #js {:href href } name))))
 
-(defn- links [sections]
+(defn- links [{:keys [sections]}]
   (dom/div #js {:className "collapse navbar-collapse"
                 :id "buckit-navbar-collapse"}
            (apply dom/ul #js {:className "nav navbar-nav"}
@@ -39,11 +39,11 @@
           %)
        sections))
 
-(defn navbar-view [{:keys [sections active-section]} owner]
+(defn navbar-view [data owner]
   (reify
     om/IRender
     (render [this]
       (dom/nav #js {:className "navbar navbar-default"}
                (dom/div #js {:className "container-fluid"}
                         (navbar-header)
-                        (links (inject-active-key sections active-section)))))))
+                        (links data))))))

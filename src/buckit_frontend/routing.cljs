@@ -5,23 +5,30 @@
            goog.History.EventType))
 
 (defonce app-state
-  (atom {:sections [{:name "Accounts" :href "#/accounts"}
-                    {:name "Budget" :href "#/budget"}]
-         :active-section nil
-         :url nil}))
+  (atom {:sections [{:key :accounts :name "Accounts" :href "#/accounts"}
+                    {:key :budget :name "Budget" :href "#/budget"}]}))
+
+(defn activate-section [section]
+  (let [set-active #(assoc % :active (= (:key %) section))]
+    (swap! app-state update-in [:sections] #(map set-active %))))
 
 (defroute "/" []
-  (swap! app-state assoc :active-section nil)
+  (activate-section nil)
   (js/console.log "you're home!"))
 
 (defroute "/accounts" []
-  (swap! app-state assoc :active-section "Accounts")
+  (activate-section :accounts)
+  (js/console.log "hi accounts"))
+
+(defroute "/budget" []
+  (activate-section :budget)
   (js/console.log "hi accounts"))
 
 (defroute "*" []
   (js/console.log "404"))
 
 (defn on-navigate [event]
+  (js/console.log (.-token event))
   (secretary/dispatch! (.-token event)))
 
 (let [h (History.)]

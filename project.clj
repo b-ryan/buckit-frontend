@@ -9,10 +9,12 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [sablono "0.3.4"]
                  [org.omcljs/om "0.8.8"]
-                 [secretary "1.2.3"]]
+                 [secretary "1.2.3"]
+                 [cljs-http "0.1.35"]]
 
   :plugins [[lein-cljsbuild "1.0.5"]
-            [lein-figwheel "0.3.5"]]
+            [lein-figwheel "0.3.5"]
+            [com.cemerick/clojurescript.test "0.3.3"]]
 
   :source-paths ["src"]
 
@@ -20,9 +22,9 @@
 
   :cljsbuild {
     :builds [{:id "dev"
-              :source-paths ["src"]
+              :source-paths ["src" "env/dev/src"]
 
-              :figwheel { :on-jsload "buckit.frontend.core/on-js-reload" }
+              :figwheel { :on-jsload "buckit.frontend.dev/on-js-reload" }
 
               :compiler {:main buckit.frontend.core
                          :asset-path "js/compiled/out"
@@ -34,7 +36,20 @@
               :compiler {:output-to "resources/public/js/compiled/buckit_frontend.js"
                          :main buckit.frontend.core
                          :optimizations :advanced
-                         :pretty-print false}}]}
+                         :pretty-print false}}
+
+             {:id "test"
+              :source-paths ["src" "test"]
+              :compiler {:output-to "target/cljs/testable.js"
+                         :preamble ["react/react.js"]
+                         :optimizations :simple
+                         :pretty-print true}}]
+
+    :test-commands {"unit-tests" ["slimerjs"
+                                  "-jsconsole"
+                                  :runner
+                                  "window.literal_js_executed=true"
+                                  "target/cljs/testable.js"]}}
 
   :figwheel {
              ;; :http-server-root "public" ;; default and assumes "resources" 

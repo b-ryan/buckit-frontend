@@ -6,4 +6,4 @@
 
 (deftest url
          (is (= "http://localhost:8080/api/accounts"
-                (m/url "accounts"))))
+                (m/url :accounts))))

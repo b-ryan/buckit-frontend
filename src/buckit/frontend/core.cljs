@@ -8,8 +8,7 @@
            goog.History.EventType))
 
 (defn activate-section [state section]
-  (let [set-active #(assoc % :active (= (:key %) section))]
-    (swap! state update-in [:sections] #(map set-active %))))
+  (swap! state assoc :active-section section))
 
 (defn setup-routes! [state]
 

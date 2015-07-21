@@ -1,27 +1,26 @@
 (ns buckit.frontend.core
-  (:require [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
+  (:require [reagent.core :as reagant]
             [secretary.core :as secretary :refer-macros [defroute]]
             [goog.events :as events]
-            [buckit.frontend.views.buckit :refer [buckit-view]])
+            [buckit.frontend.views.buckit :refer [buckit-view active-section]])
   (:import goog.History
            goog.History.EventType))
 
-(defn activate-section [state section]
-  (swap! state assoc :active-section section))
+(defn activate-section [section]
+  (reset! active-section section))
 
 (defn setup-routes! [state]
 
   (defroute "/" []
-    (activate-section state nil)
+    (activate-section nil)
     (js/console.log "you're home!"))
 
   (defroute "/accounts" []
-    (activate-section state :accounts)
+    (activate-section :accounts)
     (js/console.log "hi accounts"))
 
   (defroute "/budget" []
-    (activate-section state :budget)
+    (activate-section :budget)
     (js/console.log "hi accounts"))
 
   (defroute "*" []
@@ -33,12 +32,6 @@
                           (secretary/dispatch! (.-token event))))
     (doto h (.setEnabled true))))
 
-(defonce app-state
-  (atom {:sections [{:key :accounts :name "Accounts" :href "#/accounts"}
-                    {:key :budget :name "Budget" :href "#/budget"}]}))
-
 (defn main []
-  (om/root buckit-view
-           app-state
-           {:target (. js/document
-                       (getElementById "buckit"))}))
+  (reagant/render-component [buckit-view]
+                            (.getElementById js/document "buckit")))

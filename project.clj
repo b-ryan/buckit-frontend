@@ -8,6 +8,7 @@
                  [org.clojure/clojurescript "0.0-3297"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [reagent "0.5.0"]
+                 [re-frame "0.4.1"]
                  [secretary "1.2.3"]
                  [cljs-http "0.1.35"]]
 

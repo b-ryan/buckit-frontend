@@ -3,6 +3,11 @@
   (:require [re-frame.core :refer [register-sub]]))
 
 (register-sub
-  :active-section
+  :url-path
   (fn [db _]
-    (reaction (:active-section @db))))
+    (reaction (:url-path @db))))
+
+(register-sub
+  :accounts
+  (fn [db _]
+    (reaction (:accounts @db))))

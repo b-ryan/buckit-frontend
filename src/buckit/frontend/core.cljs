@@ -12,15 +12,15 @@
 (defonce history (History.))
 
 (defroute "/" []
-  (dispatch [:activate-section nil])
+  (dispatch [:change-url-path []])
   (js/console.log "you're home!"))
 
 (defroute "/accounts" []
-  (dispatch [:activate-section :accounts])
+  (dispatch [:change-url-path [:accounts]])
   (js/console.log "hi accounts"))
 
 (defroute "/budget" []
-  (dispatch [:activate-section :budget])
+  (dispatch [:change-url-path [:budget]])
   (js/console.log "hi accounts"))
 
 (defroute "*" []

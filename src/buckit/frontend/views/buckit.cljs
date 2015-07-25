@@ -7,17 +7,17 @@
                {:id :budget :name "Budget" :href "#/budget"}])
 
 (defn sections-ul
-  [active-section-ratom]
+  [url-path]
   [:ul.nav.navbar-nav
    (doall (for [sec sections]
             ^{:key (:id sec)}
-            [:li {:class (if (= (:id sec) @active-section-ratom)
+            [:li {:class (if (= (:id sec) (first @url-path))
                            "active"
                            nil)}
              [:a {:href (:href sec)} (:name sec)]]))])
 
 (defn navbar-view
-  [active-section-ratom]
+  [url-path]
   [:nav.navbar.navbar-default
    [:div.container-fluid
     [:div.navbar-header
@@ -30,19 +30,19 @@
       [:span.icon-bar]]
      [:span.navbar-brand "Buckit"]]
     [:div.collapse.navbar-collapse {:id "buckit-navbar-collapse"}
-     [sections-ul active-section-ratom]]]])
+     [sections-ul url-path]]]])
 
 (defn main-view
-  [active-section-ratom]
-  (case @active-section-ratom
+  [url-path]
+  (case (first @url-path)
     :accounts [accounts/accounts-view]
     [:p "default"]))
 
 (defn buckit-view
   []
-  (let [active-section-ratom (subscribe [:active-section])]
+  (let [url-path (subscribe [:url-path])]
     (fn buckit-view-render
       []
       [:div
-       [navbar-view active-section-ratom]
-       [main-view active-section-ratom]])))
+       [navbar-view url-path]
+       [main-view url-path]])))

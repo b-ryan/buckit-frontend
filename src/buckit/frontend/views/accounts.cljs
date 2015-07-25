@@ -1,14 +1,14 @@
 (ns ^:figwheel-always buckit.frontend.views.accounts
-  (:require [reagent.core :as reagant]))
+  (:require [reagent.core :as reagant]
+            [re-frame.core :refer [subscribe]]))
 
-(defonce accounts (reagant/atom [{:id 1 :name "Checking"}
-                             {:id 2 :name "Savings"}]))
-
-(defonce selected-account (reagant/atom nil))
+(defn- selector-on-change-fn
+  [selected-account accounts]
+  )
 
 (defn account-selector
   "on-change-fn will be called with the account that is selected."
-  []
+  [selected-account accounts]
   [:select {:on-change (fn [e]
                          (let [account-id (int (.-target.value e))
                                account (first (filter #(= account-id (:id %))
@@ -20,4 +20,8 @@
 
 (defn accounts-view
   []
-  [account-selector])
+  (let [accounts (subscribe [:accounts])
+        selected-account (reagant/atom nil)]
+    (fn
+      []
+      [account-selector selected-account])))

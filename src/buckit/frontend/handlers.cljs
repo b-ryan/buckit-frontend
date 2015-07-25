@@ -8,6 +8,6 @@
     default-db))
 
 (register-handler
-  :activate-section
+  :change-url-path
   (fn [db [_ value]]
-    (assoc db :active-section value)))
+    (assoc db :url-path value)))

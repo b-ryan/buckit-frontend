@@ -1,5 +1,8 @@
 (ns buckit.frontend.db)
 
 (def default-db
-  {:active-section nil
-   :selected-account nil})
+  {:url-path []
+   :url-params {}
+   :accounts [{:id 1 :name "Checking"}
+              {:id 2 :name "Savings"}]
+   })

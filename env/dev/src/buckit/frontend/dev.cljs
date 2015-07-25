@@ -7,4 +7,5 @@
 (defn on-js-reload []
   (core/main))
 
+(core/initialize-db)
 (core/main)

@@ -8,6 +8,11 @@
     (reaction (:url-path @db))))
 
 (register-sub
+  :url-params
+  (fn [db _]
+    (reaction (:url-params @db))))
+
+(register-sub
   :accounts
   (fn [db _]
     (reaction (:accounts @db))))

@@ -8,6 +8,8 @@
     default-db))
 
 (register-handler
-  :change-url-path
-  (fn [db [_ value]]
-    (assoc db :url-path value)))
+  :url-changed
+  (fn [db [_ url-path url-params]]
+    (-> db
+        (assoc :url-path url-path)
+        (assoc :url-params url-params))))

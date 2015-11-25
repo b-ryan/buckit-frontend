@@ -1,6 +1,10 @@
 (defproject buckit/frontend "0.1.0-SNAPSHOT"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
+
+  ; https://github.com/bhauman/lein-figwheel/issues/285
+  :min-lein-version "2.5.3"
+
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 

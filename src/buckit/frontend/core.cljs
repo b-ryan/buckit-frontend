@@ -10,6 +10,7 @@
   []
   (dispatch-sync [:initialize-db]))
 
-(defn main []
+(defn main
+  []
   (reagant/render-component [buckit-view]
                             (.getElementById js/document "buckit")))

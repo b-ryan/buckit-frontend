@@ -8,6 +8,11 @@ FIXME: Write a paragraph about the library/project and highlight its goals.
 
 ## Setup
 
+```
+npm install
+bower install
+```
+
 To get an interactive development environment run:
 
     lein figwheel
@@ -31,6 +36,12 @@ To create a production build run:
 
 And open your browser in `resources/public/index.html`. You will not
 get live reloading, nor a REPL. 
+
+## Test
+
+```
+lein doo slimer test
+```
 
 ## License
 

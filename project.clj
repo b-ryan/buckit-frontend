@@ -4,52 +4,50 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "0.0-3297"]
+  :dependencies [[cljs-http "0.1.35"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [reagent "0.5.0"]
+                 [org.clojure/clojure "1.7.0"]
+                 [org.clojure/clojurescript "1.7.170"]
                  [re-frame "0.4.1"]
-                 [secretary "1.2.3"]
-                 [cljs-http "0.1.35"]]
+                 [reagent "0.5.0"]
+                 [secretary "1.2.3"]]
 
-  :plugins [[lein-cljsbuild "1.0.5"]
-            [lein-figwheel "0.3.5"]
-            [com.cemerick/clojurescript.test "0.3.3"]]
+  :plugins [[lein-cljsbuild "1.1.1"]
+            [lein-doo "0.1.4"]
+            [lein-figwheel "0.5.0-2"]]
 
   :source-paths ["src"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :cljsbuild {
-    :builds [{:id "dev"
-              :source-paths ["src" "env/dev/src"]
+  :cljsbuild {:builds
+              [; "dev" build outputs JS for development, complete with
+               ; auto-reloading using figwheel.
+               {:id "dev"
+                :source-paths ["src" "env/dev/src"]
 
-              :figwheel { :on-jsload "buckit.frontend.dev/on-js-reload" }
+                :figwheel { :on-jsload "buckit.frontend.dev/on-js-reload" }
 
-              :compiler {:main buckit.frontend.core
-                         :asset-path "js/compiled/out"
-                         :output-to "resources/public/js/compiled/buckit_frontend.js"
-                         :output-dir "resources/public/js/compiled/out"
-                         :source-map-timestamp true }}
-             {:id "min"
-              :source-paths ["src"]
-              :compiler {:output-to "resources/public/js/compiled/buckit_frontend.js"
-                         :main buckit.frontend.core
-                         :optimizations :advanced
-                         :pretty-print false}}
+                :compiler {:main buckit.frontend.core
+                           :asset-path "js/compiled/out"
+                           :output-to "resources/public/js/compiled/buckit_frontend.js"
+                           :output-dir "resources/public/js/compiled/out"
+                           :source-map-timestamp true }}
 
-             {:id "test"
-              :source-paths ["src" "test"]
-              :compiler {:output-to "target/cljs/testable.js"
-                         :preamble ["react/react.js"]
-                         :optimizations :simple
-                         :pretty-print true}}]
+               ; "min" build produces minified JS using "advanced" optimizations.
+               ; It is not currently ready for production.
+               {:id "min"
+                :source-paths ["src"]
+                :compiler {:output-to "resources/public/js/compiled/buckit_frontend.js"
+                           :main buckit.frontend.core
+                           :optimizations :advanced
+                           :pretty-print false}}
 
-    :test-commands {"unit-tests" ["slimerjs"
-                                  "-jsconsole"
-                                  :runner
-                                  "window.literal_js_executed=true"
-                                  "target/cljs/testable.js"]}}
+               {:id "test"
+                :source-paths ["src" "test"]
+                :compiler {:output-to "resources/public/js/testable.js"
+                           :main 'buckit.frontend.runner
+                           :optimizations :none}}]}
 
   :figwheel {
              ;; :http-server-root "public" ;; default and assumes "resources" 

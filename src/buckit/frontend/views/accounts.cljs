@@ -21,7 +21,7 @@
        ^{:key (:id account)}
        [:option {:value (:id account)} (:name account)])]))
 
-(defn accounts-view
+(defn accounts
   []
   (let [accounts (subscribe [:accounts])
         url-params (subscribe [:url-params])]

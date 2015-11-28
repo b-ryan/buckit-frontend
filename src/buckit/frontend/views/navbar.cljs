@@ -1,32 +1,39 @@
-(ns ^:figwheel-always buckit.frontend.views.navbar
-  (:require [re-frame.core :refer [subscribe]]
-            [reagent.core :as reagant]))
+(ns buckit.frontend.views.navbar
+  (:require [buckit.frontend.routes :as routes]
+            [re-frame.core :refer [subscribe]]))
 
-(def sections [{:id :accounts :name "Accounts" :href "#/accounts"}
-               {:id :budget :name "Budget" :href "#/budget"}])
+(def ^:private sections [{:name "Accounts"
+                          :href (routes/accounts-url)
+                          :matches #{routes/accounts routes/account-details}}
+                         {:name "Budget"
+                          :href (routes/budget-url)
+                          :matches #{routes/budget}}])
 
-(defn sections-ul
+(defn- sections-ul
   [url-path]
   [:ul.nav.navbar-nav
    (doall (for [sec sections]
-            ^{:key (:id sec)}
-            [:li {:class (if (= (:id sec) (first url-path))
+            ^{:key (:name sec)}
+            [:li {:class (if (contains? (:matches sec) url-path)
                            "active"
                            nil)}
              [:a {:href (:href sec)} (:name sec)]]))])
 
 (defn navbar
-  [url-path]
-  [:nav.navbar.navbar-default
-   [:div.container-fluid
-    [:div.navbar-header
-     [:button.navbar-toggle.collapsed {:type "button"
-                                       :data-toggle "collapse"
-                                       :data-target "buckit-navbar-collapse"}
-      [:span.sr-only "Toggle navigation"]
-      [:span.icon-bar]
-      [:span.icon-bar]
-      [:span.icon-bar]]
-     [:span.navbar-brand "Buckit"]]
-    [:div.collapse.navbar-collapse {:id "buckit-navbar-collapse"}
-     [sections-ul url-path]]]])
+  []
+  (let [url-path (subscribe [:url-path])]
+    (fn
+      []
+      [:nav.navbar.navbar-default
+       [:div.container-fluid
+        [:div.navbar-header
+         [:button.navbar-toggle.collapsed {:type "button"
+                                           :data-toggle "collapse"
+                                           :data-target "buckit-navbar-collapse"}
+          [:span.sr-only "Toggle navigation"]
+          [:span.icon-bar]
+          [:span.icon-bar]
+          [:span.icon-bar]]
+         [:span.navbar-brand "Buckit"]]
+        [:div.collapse.navbar-collapse {:id "buckit-navbar-collapse"}
+         [sections-ul @url-path]]]])))

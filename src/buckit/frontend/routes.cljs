@@ -5,25 +5,36 @@
   (:import goog.History
            goog.History.EventType))
 
-(defroute home
+(def home :home)
+(def accounts :accounts)
+(def account-details :account-details)
+(def account-transactions :account-transactions)
+(def budget :budget)
+
+(defroute home-url
   "/"
   []
-  (dispatch [:url-changed []]))
+  (dispatch [:url-changed home]))
 
-(defroute accounts
+(defroute accounts-url
   "/accounts"
   []
-  (dispatch [:url-changed [:accounts]]))
+  (dispatch [:url-changed accounts]))
 
-(defroute account-details
+(defroute account-details-url
   "/accounts/:account-id"
   [account-id]
-  (dispatch [:url-changed [:accounts] {:account-id (int account-id)}]))
+  (dispatch [:url-changed account-details {:account-id account-id}]))
 
-(defroute budget
+(defroute account-transactions-url
+  "/accounts/:account-id/transactions"
+  [account-id]
+  (dispatch [:url-changed account-transactions {:account-id account-id}]))
+
+(defroute budget-url
   "/budget"
   []
-  (dispatch [:url-changed [:budget]]))
+  (dispatch [:url-changed budget]))
 
 (defroute
   "*"

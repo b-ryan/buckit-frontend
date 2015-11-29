@@ -11,6 +11,10 @@
 (def account-transactions :account-transactions)
 (def budget :budget)
 
+(defn- ->int
+  [x]
+  (js/parseInt x))
+
 (defroute home-url
   "/"
   []
@@ -24,12 +28,12 @@
 (defroute account-details-url
   "/accounts/:account-id"
   [account-id]
-  (dispatch [:url-changed account-details {:account-id account-id}]))
+  (dispatch [:url-changed account-details {:account-id (->int account-id)}]))
 
 (defroute account-transactions-url
   "/accounts/:account-id/transactions"
   [account-id]
-  (dispatch [:url-changed account-transactions {:account-id account-id}]))
+  (dispatch [:url-changed account-transactions {:account-id (->int account-id)}]))
 
 (defroute budget-url
   "/budget"

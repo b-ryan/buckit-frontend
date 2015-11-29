@@ -16,3 +16,8 @@
   :accounts
   (fn [db _]
     (reaction (:accounts @db))))
+
+(register-sub
+  :transactions
+  (fn [db _]
+    (reaction (:transactions @db))))

@@ -1,11 +1,11 @@
 (ns buckit.frontend.handlers
-  (:require [re-frame.core :refer [register-handler path]]
-            [buckit.frontend.db :refer [default-db]]))
+  (:require [buckit.frontend.db :as buckit.db]
+            [re-frame.core :refer [register-handler path]]))
 
 (register-handler
   :initialize-db
   (fn [db _]
-    default-db))
+    buckit.db/default-db))
 
 (register-handler
   :url-changed

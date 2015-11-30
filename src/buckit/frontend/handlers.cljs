@@ -5,7 +5,7 @@
 (register-handler
   :initialize-db
   (fn [db _]
-    buckit.db/default-db))
+    buckit.db/seed-db))
 
 (register-handler
   :url-changed

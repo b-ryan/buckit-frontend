@@ -25,15 +25,14 @@
     (fn
       []
       [:nav.navbar.navbar-default
-       [:div.container-fluid
-        [:div.navbar-header
-         [:button.navbar-toggle.collapsed {:type "button"
-                                           :data-toggle "collapse"
-                                           :data-target "buckit-navbar-collapse"}
-          [:span.sr-only "Toggle navigation"]
-          [:span.icon-bar]
-          [:span.icon-bar]
-          [:span.icon-bar]]
-         [:span.navbar-brand "Buckit"]]
-        [:div.collapse.navbar-collapse {:id "buckit-navbar-collapse"}
-         [sections-ul @url-path]]]])))
+       [:div.navbar-header
+        [:button.navbar-toggle.collapsed {:type "button"
+                                          :data-toggle "collapse"
+                                          :data-target "buckit-navbar-collapse"}
+         [:span.sr-only "Toggle navigation"]
+         [:span.icon-bar]
+         [:span.icon-bar]
+         [:span.icon-bar]]
+        [:span.navbar-brand "Buckit"]]
+       [:div.collapse.navbar-collapse.navbar-right {:id "buckit-navbar-collapse"}
+        [sections-ul @url-path]]])))

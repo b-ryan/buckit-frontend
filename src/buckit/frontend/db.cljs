@@ -1,7 +1,9 @@
 (ns buckit.frontend.db
   (:require [buckit.frontend.accounts :as accounts]))
 
-(defonce default-db
+;TODO prismatic schema to define db?
+
+(defonce seed-db
   {:url-path []
    :url-params {}
 
@@ -11,7 +13,8 @@
 
    :payees [{:id 1 :name "Grocery Store"}]
 
-   :transactions [{:id 1
+   :transactions [
+                  {:id 1
                    :date "2015-11-28"
                    :payee-id 1
                    :splits [{:id 1
@@ -23,4 +26,23 @@
                              :transaction-id 1
                              :account-id 3
                              :amount 20.52
-                             :reconciled-status "not_reconciled"}]}]})
+                             :reconciled-status "not_reconciled"}]}
+                  {:id 2
+                   :date "2015-11-29"
+                   :payee-id 1
+                   :splits [{:id 3
+                             :transaction-id 2
+                             :account-id 1
+                             :amount -16.18
+                             :reconciled-status "not_reconciled"}
+                            {:id 4
+                             :transaction-id 2
+                             :account-id 2
+                             :amount -2
+                             :reconciled-status "not_reconciled"}
+                            {:id 5
+                             :transaction-id 2
+                             :account-id 3
+                             :amount 18.18
+                             :reconciled-status "not_reconciled"}]}
+                  ]})

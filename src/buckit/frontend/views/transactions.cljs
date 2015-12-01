@@ -39,14 +39,6 @@
      ; FIXME other currencies?
      (str " $" (js/Math.abs amount))]))
 
-(def ledger-header
-  [:tr
-   [:th "ID"]
-   [:th "Date"]
-   [:th "Payee"]
-   [:th "Category"]
-   [:th "Amount"]])
-
 (defn transactions
   []
   (let [accounts     (subscribe [:accounts-by-id])
@@ -57,18 +49,22 @@
       []
       (let [account-id (:account-id @url-params)
             transactions (filter #(account-in-splits? account-id %) @transactions)]
-        [:table.table.buckit--ledger
-         [:thead ledger-header]
-         [:tbody
-          (doall
-            (for [transaction transactions
-                  :let [splits       (:splits transaction)
-                        main-split   (split-for-account splits account-id)
-                        other-splits (splits-for-other-accounts splits account-id)]]
-              ^{:key (:id transaction)}
-              [:tr
-               [:td (:id transaction)]
-               [:td (:date transaction)]
-               [:td (->> transaction :payee-id (get @payees) :name)]
-               [:td (account-to-show @accounts other-splits)]
-               [:td (amount-to-show main-split)]]))]]))))
+        [:div.container-fluid.buckit--ledger
+         [:div.row.buckit--ledger-header
+          [:span.col-sm-2 "ID"]
+          [:span.col-sm-2 "Date"]
+          [:span.col-sm-3 "Payee"]
+          [:span.col-sm-3 "Category"]
+          [:span.col-sm-2 "Amount"]]
+         (doall
+           (for [transaction transactions
+                 :let [splits       (:splits transaction)
+                       main-split   (split-for-account splits account-id)
+                       other-splits (splits-for-other-accounts splits account-id)]]
+             ^{:key (:id transaction)}
+             [:div.row.buckit--ledger-row
+              [:span.col-sm-2 (:id transaction)]
+              [:span.col-sm-2 (:date transaction)]
+              [:span.col-sm-3 (->> transaction :payee-id (get @payees) :name)]
+              [:span.col-sm-3 (account-to-show @accounts other-splits)]
+              [:span.col-sm-2 (amount-to-show main-split)]]))]))))

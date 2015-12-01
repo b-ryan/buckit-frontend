@@ -14,7 +14,7 @@
         url-path   (subscribe [:url-path])]
     (fn
       []
-      [:ul.nav
+      [:ul.nav.buckit--sidebar
        (doall
          (for [account @accounts
                :when (show-account? account)

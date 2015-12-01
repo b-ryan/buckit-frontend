@@ -25,5 +25,5 @@
        [views.navbar/navbar]
        [:div.container-fluid
         [:div.row
-         [:div.col-sm-2.buckit--sidebar [views.sidebar/sidebar]]
+         [:div.col-sm-2.buckit--sidebar-wrapper [views.sidebar/sidebar]]
          [:div.col-sm-10.col-sm-offset-2.buckit--main (main-content @url-path)]]]])))

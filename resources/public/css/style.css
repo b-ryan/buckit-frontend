@@ -17,20 +17,16 @@ body {
     padding-top: 50px;
 }
 
-.buckit--sidebar {
+.buckit--sidebar-wrapper {
     position: fixed;
     top: 51px;
     bottom: 0;
-    padding: 20px;
+    padding: 0;
+    padding-top: 20px;
     background-color: #eee;
 }
 
-.buckit--sidebar .nav {
-    margin-left: -20px;
-    margin-right: -20px;
-}
-
-.buckit--sidebar .nav .active a {
+.buckit--sidebar li.active a {
     color: #fff;
     background-color: #428bca;
 }

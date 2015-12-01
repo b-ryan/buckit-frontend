@@ -19,12 +19,13 @@
                            nil)}
              [:a {:href (:href sec)} (:name sec)]]))])
 
+; FIXME collapse button doesn't seem to work
 (defn navbar
   []
   (let [url-path (subscribe [:url-path])]
     (fn
       []
-      [:nav.navbar.navbar-default
+      [:nav.navbar.navbar-inverse.navbar-fixed-top
        [:div.navbar-header
         [:button.navbar-toggle.collapsed {:type "button"
                                           :data-toggle "collapse"

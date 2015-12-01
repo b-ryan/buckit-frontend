@@ -9,12 +9,20 @@
 
 (defn sidebar
   []
-  (let [accounts (subscribe [:accounts])
-        url-params (subscribe [:url-params])]
+  (let [accounts   (subscribe [:accounts])
+        url-params (subscribe [:url-params])
+        url-path   (subscribe [:url-path])]
     (fn
       []
-      [:div {:class "buckit--sidebar"}
-            (for [account @accounts :when (show-account? account)]
-              ^{:key (:id account)}
-              [:div [:a {:href (routes/account-transactions-url {:account-id (:id account)})}
-                        (:name account)]])])))
+      [:ul.nav
+       (doall
+         (for [account @accounts
+               :when (show-account? account)
+               :let [account-id (:id account)
+                     href       (routes/account-transactions-url {:account-id account-id})
+                     active?    (and (= @url-path routes/account-transactions)
+                                     (= account-id (:account-id @url-params)))]]
+           ^{:key account-id}
+           [:li {:class (when active? "active")}
+            [:a {:href href} (:name account)
+             [:span.sr-only (when active? "(current)")]]]))])))

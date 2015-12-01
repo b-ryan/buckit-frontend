@@ -23,8 +23,7 @@
       []
       [:div
        [views.navbar/navbar]
-       [:div {:class "container-fluid"}
-        [:div {:class "row"}
-         [:div {:class "col-sm-2"} [views.sidebar/sidebar]]
-         [:div {:class "col-sm-10"}
-          (main-content @url-path)]]]])))
+       [:div.container-fluid
+        [:div.row
+         [:div.col-sm-2.buckit--sidebar [views.sidebar/sidebar]]
+         [:div.col-sm-10.col-sm-offset-2.buckit--main (main-content @url-path)]]]])))

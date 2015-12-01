@@ -19,11 +19,23 @@
   [splits account-id]
   (remove #(= (:account-id %) account-id) splits))
 
-(defn account-to-show
+(defn- account-to-show
   [accounts other-splits]
   (if (> (count other-splits) 1)
     "Splits"
     (->> other-splits first :account-id (get accounts) :name)))
+
+(defn- amount-to-show
+  [main-split]
+  (* -1 (:amount main-split)))
+
+(def ledger-header
+  [:tr
+   [:th "ID"]
+   [:th "Date"]
+   [:th "Payee"]
+   [:th "Category"]
+   [:th "Amount"]])
 
 (defn transactions
   []
@@ -36,14 +48,7 @@
       (let [account-id (:account-id @url-params)
             transactions (filter #(account-in-splits? account-id %) @transactions)]
         [:table.table
-         [:thead
-          [:tr
-           [:th "ID"]
-           [:th "Date"]
-           [:th "Payee"]
-           [:th "Category"]
-           [:th "Amount"]
-           [:th "Status"]]]
+         [:thead ledger-header]
          [:tbody
           (doall
             (for [transaction transactions
@@ -56,5 +61,4 @@
                [:td (:date transaction)]
                [:td (->> transaction :payee-id (get @payees) :name)]
                [:td (account-to-show @accounts other-splits)]
-               [:td "?"]
-               [:td "?"]]))]]))))
+               [:td (amount-to-show main-split)]]))]]))))

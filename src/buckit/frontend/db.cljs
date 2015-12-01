@@ -45,4 +45,17 @@
                              :account-id 3
                              :amount 18.18
                              :reconciled-status "not_reconciled"}]}
+                  {:id 3
+                   :date "2015-11-30"
+                   :payee-id 1
+                   :splits [{:id 6
+                             :transaction-id 3
+                             :account-id 1
+                             :amount 14.44
+                             :reconciled-status "not_reconciled"}
+                            {:id 7
+                             :transaction-id 3
+                             :account-id 3
+                             :amount -14.44
+                             :reconciled-status "not_reconciled"}]}
                   ]})

@@ -38,3 +38,11 @@ body {
 .buckit--main {
     padding: 20px;
 }
+
+.buckit--ledger span.expense::before {
+    color: red;
+}
+
+.buckit--ledger span.income::before {
+    color: green;
+}

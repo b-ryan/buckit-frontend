@@ -27,7 +27,17 @@
 
 (defn- amount-to-show
   [main-split]
-  (* -1 (:amount main-split)))
+  ; FIXME this is not accessible! Perhaps use negative/positive, separate
+  ; columns, or some other means.
+  (let [amount   (:amount main-split)
+        expense? (< amount 0)]
+    [:span {:class (str "glyphicon "
+                        (if expense? "glyphicon-arrow-right" "glyphicon-arrow-left")
+                        " "
+                        (if expense? "expense" "income"))
+            :aria-hidden true}
+     ; FIXME other currencies?
+     (str " $" (js/Math.abs amount))]))
 
 (def ledger-header
   [:tr
@@ -47,7 +57,7 @@
       []
       (let [account-id (:account-id @url-params)
             transactions (filter #(account-in-splits? account-id %) @transactions)]
-        [:table.table
+        [:table.table.buckit--ledger
          [:thead ledger-header]
          [:tbody
           (doall

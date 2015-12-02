@@ -9,6 +9,7 @@
 (def accounts :accounts)
 (def account-details :account-details)
 (def account-transactions :account-transactions)
+(def account-transaction-details :account-transaction-details)
 (def budget :budget)
 
 (defn- ->int
@@ -34,6 +35,12 @@
   "/accounts/:account-id/transactions"
   [account-id]
   (dispatch [:url-changed account-transactions {:account-id (->int account-id)}]))
+
+(defroute account-transaction-details-url
+  "/accounts/:account-id/transactions/:transaction-id"
+  [account-id transaction-id]
+  (dispatch [:url-changed account-transaction-details {:account-id (->int account-id)
+                                                       :transaction-id (->int transaction-id)}]))
 
 (defroute budget-url
   "/budget"

@@ -48,32 +48,41 @@
     (fn
       [account-id selected-transaction-id & {:keys [edit-transaction?]}]
       (let [transactions (filter #(account-in-splits? account-id %) @transactions)]
-        [:div.container-fluid.buckit--ledger
-         [:div.row.buckit--ledger-header
-          [:span.col-sm-2 "Date"]
-          [:span.col-sm-2 "Payee"]
-          [:span.col-sm-3 "Category"]
-          [:span.col-sm-3 "Memo"]
-          [:span.col-sm-2 "Amount"]]
+        [:div.buckit--ledger
+         [:div.container-fluid
+          [:div.row.buckit--ledger-header
+           [:span.col-sm-2 "Date"]
+           [:span.col-sm-2 "Payee"]
+           [:span.col-sm-3 "Category"]
+           [:span.col-sm-3 "Memo"]
+           [:span.col-sm-2 "Amount"]]]
          (doall
            (for [transaction transactions
                  :let [transaction-id (:id transaction)
+                       is-selected?   (= selected-transaction-id transaction-id)
                        splits         (:splits transaction)
                        main-split     (split-for-account splits account-id)
                        other-splits   (splits-for-other-accounts splits account-id)]]
              ^{:key transaction-id}
-             [:div.row.buckit--ledger-row
-              {:class    (if (= selected-transaction-id transaction-id)
-                           (if edit-transaction? "editing" "selected")
-                           "normal")
-               :on-click #(routes/go-to (routes/account-transaction-details-url
-                                          {:account-id account-id
-                                           :transaction-id transaction-id}))}
-              [:span.col-sm-2 (:date transaction)]
-              [:span.col-sm-2 (->> transaction :payee-id (get @payees) :name)]
-              [:span.col-sm-3 (account-to-show @accounts other-splits)]
-              [:span.col-sm-3]
-              [:span.col-sm-2 (amount-to-show main-split)]]))]))))
+             [:div.container-fluid.buckit--ledger-row
+              {:class    (when is-selected? "active")
+               :on-click #(routes/go-to
+                            ((if is-selected?
+                               routes/account-transaction-edit-url
+                               routes/account-transaction-details-url)
+                              {:account-id account-id
+                               :transaction-id transaction-id}))}
+
+              [:div.row
+               [:span.col-sm-2 (:date transaction)]
+               [:span.col-sm-2 (->> transaction :payee-id (get @payees) :name)]
+               [:span.col-sm-3 (account-to-show @accounts other-splits)]
+               [:span.col-sm-3]
+               [:span.col-sm-2 (amount-to-show main-split)]]
+
+              (when (and edit-transaction? is-selected?)
+                [:div.row
+                 [:span.col-sm-12 "heyo"]])]))]))))
 
 (defn transactions
   [account-id selected-transaction-id & {:keys [edit-transaction?]}]

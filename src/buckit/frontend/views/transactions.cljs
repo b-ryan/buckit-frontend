@@ -41,12 +41,12 @@
      (str " $" (js/Math.abs amount))]))
 
 (defn ledger
-  [account-id selected-transaction-id]
+  [account-id selected-transaction-id & {:keys [edit-transaction?]}]
   (let [accounts     (subscribe [:accounts-by-id])
         payees       (subscribe [:payees-by-id])
         transactions (subscribe [:transactions])]
     (fn
-      [account-id selected-transaction-id]
+      [account-id selected-transaction-id & {:keys [edit-transaction?]}]
       (let [transactions (filter #(account-in-splits? account-id %) @transactions)]
         [:div.container-fluid.buckit--ledger
          [:div.row.buckit--ledger-header
@@ -63,7 +63,9 @@
                        other-splits   (splits-for-other-accounts splits account-id)]]
              ^{:key transaction-id}
              [:div.row.buckit--ledger-row
-              {:class    (when (= selected-transaction-id transaction-id) "active")
+              {:class    (if (= selected-transaction-id transaction-id)
+                           (if edit-transaction? "editing" "selected")
+                           "normal")
                :on-click #(routes/go-to (routes/account-transaction-details-url
                                           {:account-id account-id
                                            :transaction-id transaction-id}))}
@@ -74,9 +76,7 @@
               [:span.col-sm-2 (amount-to-show main-split)]]))]))))
 
 (defn transactions
-  []
-  (let [url-params (subscribe [:url-params])]
-    (fn
-      []
-      [:div.buckit--transactions-view
-       [ledger (:account-id @url-params) (:transaction-id @url-params)]])))
+  [account-id selected-transaction-id & {:keys [edit-transaction?]}]
+  [:div.buckit--transactions-view
+   [ledger account-id selected-transaction-id
+    :edit-transaction? edit-transaction?]])

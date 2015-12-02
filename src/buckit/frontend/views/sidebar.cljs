@@ -7,6 +7,11 @@
   [account]
   (contains? accounts/owned-account-types (:type account)))
 
+(def ^:private matching-routes
+  #{routes/account-transactions
+    routes/account-transaction-details
+    routes/account-transaction-edit})
+
 (defn sidebar
   []
   (let [accounts   (subscribe [:accounts])
@@ -20,7 +25,7 @@
                :when (show-account? account)
                :let [account-id (:id account)
                      href       (routes/account-transactions-url {:account-id account-id})
-                     active?    (and (= @url-path routes/account-transactions)
+                     active?    (and (contains? matching-routes @url-path)
                                      (= account-id (:account-id @url-params)))]]
            ^{:key account-id}
            [:li {:class (when active? "active")}

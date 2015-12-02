@@ -4,7 +4,7 @@
             [buckit.frontend.handlers]
             [buckit.frontend.subs]
             [buckit.frontend.routes]
-            [buckit.frontend.views.buckit :as views.buckit]))
+            [buckit.frontend.views.core :as views.core]))
 
 (defn initialize-db
   []
@@ -12,5 +12,5 @@
 
 (defn main
   []
-  (reagant/render-component [views.buckit/buckit]
+  (reagant/render-component [views.core/main]
                             (.getElementById js/document "buckit")))

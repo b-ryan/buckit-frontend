@@ -57,11 +57,15 @@ body {
     border-top: 1px solid #eee;
 }
 
-.buckit--ledger-row.active {
+.buckit--ledger-row.selected {
     background-color: #ffffab;
 }
 
-.buckit--ledger-row:not(.active):hover {
+.buckit--ledger-row.editing {
+    background-color: #bca;
+}
+
+.buckit--ledger-row.normal:hover {
     background-color: #f5f5f5;
 }
 

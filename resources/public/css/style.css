@@ -65,6 +65,10 @@ body {
     background-color: #f5f5f5;
 }
 
+.buckit--ledger-row > div {
+    padding: 2px;
+}
+
 .buckit--ledger span.expense::before {
     color: red;
 }

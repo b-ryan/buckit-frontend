@@ -38,7 +38,7 @@
   [views.transactions/transactions
    (:account-id url-params)
    (:transaction-id url-params)
-   :edit-transaction? true])
+   :edit-selected? true])
 
 (defmethod main-content routes/budget
   [& args]

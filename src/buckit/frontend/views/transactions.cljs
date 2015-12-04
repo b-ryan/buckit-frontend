@@ -40,52 +40,77 @@
      ; FIXME other currencies?
      (str " $" (js/Math.abs amount))]))
 
-(defn ledger
-  [account-id selected-transaction-id & {:keys [edit-transaction?]}]
-  (let [accounts     (subscribe [:accounts-by-id])
-        payees       (subscribe [:payees-by-id])
-        transactions (subscribe [:transactions])]
+(def ledger-header
+  [:div.container-fluid
+   [:div.row.buckit--ledger-header
+    [:span.col-sm-2 "Date"]
+    [:span.col-sm-2 "Payee"]
+    [:span.col-sm-3 "Category"]
+    [:span.col-sm-3 "Memo"]
+    [:span.col-sm-2 "Amount"]]])
+
+(defn ledger-row
+  [account-id transaction & {:keys [is-selected?]}]
+  (let [accounts (subscribe [:accounts-by-id])
+        payees   (subscribe [:payees-by-id])]
     (fn
-      [account-id selected-transaction-id & {:keys [edit-transaction?]}]
-      (let [transactions (filter #(account-in-splits? account-id %) @transactions)]
-        [:div.buckit--ledger
-         [:div.container-fluid
-          [:div.row.buckit--ledger-header
-           [:span.col-sm-2 "Date"]
-           [:span.col-sm-2 "Payee"]
-           [:span.col-sm-3 "Category"]
-           [:span.col-sm-3 "Memo"]
-           [:span.col-sm-2 "Amount"]]]
-         (doall
-           (for [transaction transactions
-                 :let [transaction-id (:id transaction)
-                       is-selected?   (= selected-transaction-id transaction-id)
-                       splits         (:splits transaction)
-                       main-split     (split-for-account splits account-id)
-                       other-splits   (splits-for-other-accounts splits account-id)]]
-             ^{:key transaction-id}
-             [:div.container-fluid.buckit--ledger-row
-              {:class    (when is-selected? "active")
-               :on-click #(routes/go-to
-                            ((if is-selected?
-                               routes/account-transaction-edit-url
-                               routes/account-transaction-details-url)
-                              {:account-id account-id
-                               :transaction-id transaction-id}))}
+      [account-id transaction & {:keys [is-selected?]}]
+      (let [splits       (:splits transaction)
+            main-split   (split-for-account splits account-id)
+            other-splits (splits-for-other-accounts splits account-id)]
+        [:div.row
+         {:on-click #(routes/go-to
+                       ((if is-selected?
+                          routes/account-transaction-edit-url
+                          routes/account-transaction-details-url)
+                          {:account-id account-id
+                           :transaction-id (:id transaction)}))}
+          [:span.col-sm-2 (:date transaction)]
+          [:span.col-sm-2 (->> transaction :payee-id (get @payees) :name)]
+          [:span.col-sm-3 (account-to-show @accounts other-splits)]
+          [:span.col-sm-3]
+          [:span.col-sm-2 (amount-to-show main-split)]]))))
 
-              [:div.row
-               [:span.col-sm-2 (:date transaction)]
-               [:span.col-sm-2 (->> transaction :payee-id (get @payees) :name)]
-               [:span.col-sm-3 (account-to-show @accounts other-splits)]
-               [:span.col-sm-3]
-               [:span.col-sm-2 (amount-to-show main-split)]]
+(defn editor
+  [account-id transaction]
+  (let []
+    (fn
+      [account-id transaction]
+      [:div
+       [:div.row
+        [:input.col-sm-2 {:type "text" :placeholder "Date"}]
+        [:input.col-sm-2 {:type "text" :placeholder "Payee"}]
+        [:input.col-sm-3 {:type "text" :placeholder "Category"}]
+        [:input.col-sm-3 {:type "text" :placeholder "Memo"}]
+        [:input.col-sm-2 {:type "text" :placeholder "Amount"}]]
+       [:div.row
+        [:div.col-sm-12
+         [:div.btn-toolbar.pull-right
+          [:button.btn.btn-default.btn-xs "Cancel"]
+          [:button.btn.btn-default.btn-xs "Save"]]]]]
+      )))
 
-              (when (and edit-transaction? is-selected?)
-                [:div.row
-                 [:span.col-sm-12 "heyo"]])]))]))))
+(defn ledger
+  [account-id selected-transaction-id & {:keys [edit-selected?]}]
+  (let [transactions (subscribe [:transactions])]
+    (fn
+      [account-id selected-transaction-id & {:keys [edit-selected?]}]
+      [:div.buckit--ledger
+       ledger-header
+       (doall
+         (for [transaction (filter #(account-in-splits? account-id %) @transactions)
+               :let [transaction-id (:id transaction)
+                     is-selected?   (= selected-transaction-id transaction-id)]]
+           ^{:key transaction-id}
+           [:div.container-fluid.buckit--ledger-row
+            {:class (when is-selected? "active")}
+            (if (and is-selected? edit-selected?)
+              [editor account-id transaction]
+              [ledger-row account-id transaction
+               :is-selected? (= selected-transaction-id transaction-id)])]))])))
 
 (defn transactions
-  [account-id selected-transaction-id & {:keys [edit-transaction?]}]
+  [account-id selected-transaction-id & {:keys [edit-selected?]}]
   [:div.buckit--transactions-view
    [ledger account-id selected-transaction-id
-    :edit-transaction? edit-transaction?]])
+    :edit-selected? edit-selected?]])

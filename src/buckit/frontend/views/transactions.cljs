@@ -86,8 +86,8 @@
        [:div.row
         [:div.col-sm-12
          [:div.btn-toolbar.pull-right
-          [:button.btn.btn-default.btn-xs "Cancel"]
-          [:button.btn.btn-default.btn-xs "Save"]]]]]
+          [:button.btn.btn-danger.btn-xs "Cancel"]
+          [:button.btn.btn-success.btn-xs "Save"]]]]]
       )))
 
 (defn ledger

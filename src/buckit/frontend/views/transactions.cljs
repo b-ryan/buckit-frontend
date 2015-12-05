@@ -133,27 +133,24 @@
                                     :other-splits (vec other-splits)})]
     (fn
       [account-id transaction]
-      [:form
-       [forms/bind-fields
+      [forms/bind-fields
+       [:form
         [:div.row
          (date-editor-template)
          (payee-editor-template @payees)
          (split-editor-template [:main-split] @accounts)]
-        form]
-       (doall
-         (for [i (range (count other-splits))]
-           ^{:key i}
-           [forms/bind-fields 
+        (doall
+          (for [i (range (count other-splits))]
+            ^{:key i}
             [:div.row
              [:div.col-sm-4]
-             (let [x (split-editor-template [:other-splits i] @accounts)]
-               x)]
-            form]))
-       [:div.row
-        [:div.col-sm-12
-         [:div.btn-toolbar.pull-right
-          [:button.btn.btn-danger.btn-xs "Cancel"]
-          [:button.btn.btn-success.btn-xs "Save"]]]]])))
+             (split-editor-template [:other-splits i] @accounts)]))
+        [:div.row
+         [:div.col-sm-12
+          [:div.btn-toolbar.pull-right
+           [:button.btn.btn-danger.btn-xs "Cancel"]
+           [:button.btn.btn-success.btn-xs "Save"]]]]]
+       form])))
 
 (defn ledger
   [account-id selected-transaction-id & {:keys [edit-selected?]}]

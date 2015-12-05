@@ -110,12 +110,12 @@
 
     (with-meta
       (editor-div 3 (input :id (conj split-path :memo)
-                           :field :text :placeholder "Memo"))
+                           :field :numeric :placeholder "Memo"))
       {:key :memo})
 
     (with-meta
       (editor-div 2 (input :id (conj split-path :amount)
-                           :field :text :placeholder "Amount"))
+                           :field :numeric :placeholder "Amount"))
       {:key :amount})))
 
 (defn editor
@@ -148,8 +148,15 @@
         [:div.row
          [:div.col-sm-12
           [:div.btn-toolbar.pull-right
-           [:button.btn.btn-danger.btn-xs "Cancel"]
-           [:button.btn.btn-success.btn-xs "Save"]]]]]
+           [:button.btn.btn-danger.btn-xs
+            {:on-click #(routes/go-to
+                          (routes/account-transaction-details-url
+                            {:account-id account-id
+                             :transaction-id (:id transaction)}))}
+            "Cancel"]
+           [:button.btn.btn-success.btn-xs
+            {:on-click #(js/console.log (clj->js @form))}
+            "Save"]]]]]
        form])))
 
 (defn ledger

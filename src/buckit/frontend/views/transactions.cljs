@@ -1,6 +1,8 @@
 (ns buckit.frontend.views.transactions
   (:require [buckit.frontend.routes :as routes]
-            [re-frame.core :refer [subscribe]]))
+            [re-frame.core :refer [subscribe]]
+            [reagent.core :as reagent]
+            [reagent-forms.core :as forms]))
 
 ; TODO this should be moved
 (defn- account-in-splits?
@@ -72,29 +74,50 @@
           [:span.col-sm-2 (amount-to-show main-split)]]))))
 
 (defn- input
-  [& {:keys [width type placeholder]}]
+  [& {:keys [id type placeholder width]}]
   [:div.buckit--ledger-editor-input
    {:class (str "col-sm-" width)}
-   [:input.form-control.input-sm {:type type :placeholder placeholder}]])
+   [:input.form-control.input-sm {:id id :field type :placeholder placeholder}]])
+
+(def date-editor-template
+  (input :id :transaction.date :type :text :placeholder "Date" :width 2))
+
+(def payee-editor-template
+  (input :id :transaction.payee-id :type :text :placeholder "Payee" :width 2))
+
+(defn account-editor-template
+  [split-num]
+  (input :id [:transaction :splits split-num :account-id] :type :text :placeholder "Category" :width 3))
+
+(defn memo-editor-template
+  [split-num]
+  (input :id [:transaction :splits split-num :memo] :type :text :placeholder "Memo" :width 3))
+
+(defn amount-editor-template
+  [split-num]
+  (input :id [:transaction :splits split-num :amount] :type :text :placeholder "Amount" :width 2))
 
 (defn editor
-  ; https://github.com/reagent-project/reagent-forms
   [account-id transaction]
-  (let []
+  (let [accounts (subscribe [:accounts-by-id])
+        payees   (subscribe [:payees-by-id])
+        form     (reagent/atom {:transaction transaction})]
     (fn
       [account-id transaction]
-      [:form
-       [:div.row
-        [input :width 2 :type "text" :placeholder "Date"]
-        [input :width 2 :type "text" :placeholder "Payee"]
-        [input :width 3 :type "text" :placeholder "Category"]
-        [input :width 3 :type "text" :placeholder "Memo"]
-        [input :width 2 :type "text" :placeholder "Amount"]]
-       [:div.row
-        [:div.col-sm-12
-         [:div.btn-toolbar.pull-right
-          [:button.btn.btn-danger.btn-xs "Cancel"]
-          [:button.btn.btn-success.btn-xs "Save"]]]]])))
+      (let [main-split   (split-for-account splits account-id)
+            other-splits (splits-for-other-accounts splits account-id)]
+        [:form
+         [:div.row
+          [forms/bind-fields date-editor-template form]
+          [forms/bind-fields payee-editor-template form]
+          [forms/bind-fields (account-editor-template 0) form]
+          [forms/bind-fields (memo-editor-template 0) form]
+          [forms/bind-fields (amount-editor-template 0) form]]
+         [:div.row
+          [:div.col-sm-12
+           [:div.btn-toolbar.pull-right
+            [:button.btn.btn-danger.btn-xs "Cancel"]
+            [:button.btn.btn-success.btn-xs "Save"]]]]]))))
 
 (defn ledger
   [account-id selected-transaction-id & {:keys [edit-selected?]}]

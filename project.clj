@@ -14,6 +14,7 @@
                  [org.clojure/clojurescript "1.7.170"]
                  [re-frame "0.4.1"]
                  [reagent "0.5.0"]
+                 [reagent-forms "0.5.13"]
                  [secretary "1.2.3"]]
 
   :plugins [[lein-cljsbuild "1.1.1"]

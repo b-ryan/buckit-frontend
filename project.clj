@@ -18,7 +18,8 @@
 
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-doo "0.1.4"]
-            [lein-figwheel "0.5.0-2"]]
+            [lein-figwheel "0.5.0-2" :exclusions [org.clojure/tools.reader
+                                                  ring/ring-core]]]
 
   :source-paths ["src"]
 

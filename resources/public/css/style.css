@@ -65,8 +65,13 @@ body {
     background-color: #f5f5f5;
 }
 
-.buckit--ledger-row > div {
+.buckit--ledger-row > div,
+.buckit--ledger-row > form {
     padding: 2px;
+}
+
+.buckit--ledger-editor-input {
+    padding: 0;
 }
 
 .buckit--ledger-row div.btn-toolbar {

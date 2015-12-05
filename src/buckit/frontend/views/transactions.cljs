@@ -71,24 +71,30 @@
           [:span.col-sm-3]
           [:span.col-sm-2 (amount-to-show main-split)]]))))
 
+(defn- input
+  [& {:keys [width type placeholder]}]
+  [:div.buckit--ledger-editor-input
+   {:class (str "col-sm-" width)}
+   [:input.form-control.input-sm {:type type :placeholder placeholder}]])
+
 (defn editor
+  ; https://github.com/reagent-project/reagent-forms
   [account-id transaction]
   (let []
     (fn
       [account-id transaction]
-      [:div
+      [:form
        [:div.row
-        [:input.col-sm-2 {:type "text" :placeholder "Date"}]
-        [:input.col-sm-2 {:type "text" :placeholder "Payee"}]
-        [:input.col-sm-3 {:type "text" :placeholder "Category"}]
-        [:input.col-sm-3 {:type "text" :placeholder "Memo"}]
-        [:input.col-sm-2 {:type "text" :placeholder "Amount"}]]
+        [input :width 2 :type "text" :placeholder "Date"]
+        [input :width 2 :type "text" :placeholder "Payee"]
+        [input :width 3 :type "text" :placeholder "Category"]
+        [input :width 3 :type "text" :placeholder "Memo"]
+        [input :width 2 :type "text" :placeholder "Amount"]]
        [:div.row
         [:div.col-sm-12
          [:div.btn-toolbar.pull-right
           [:button.btn.btn-danger.btn-xs "Cancel"]
-          [:button.btn.btn-success.btn-xs "Save"]]]]]
-      )))
+          [:button.btn.btn-success.btn-xs "Save"]]]]])))
 
 (defn ledger
   [account-id selected-transaction-id & {:keys [edit-selected?]}]

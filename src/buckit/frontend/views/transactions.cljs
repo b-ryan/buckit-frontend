@@ -23,10 +23,10 @@
   (remove #(= (:account-id %) account-id) splits))
 
 (defn- account-to-show
-  [accounts other-splits]
+  [accounts-by-id other-splits]
   (if (> (count other-splits) 1)
     "Splits"
-    (->> other-splits first :account-id (get accounts) :name)))
+    (->> other-splits first :account-id (get accounts-by-id) :name)))
 
 (defn- amount-to-show
   [main-split]
@@ -53,8 +53,8 @@
 
 (defn ledger-row
   [account-id transaction & {:keys [is-selected?]}]
-  (let [accounts (subscribe [:accounts-by-id])
-        payees   (subscribe [:payees-by-id])]
+  (let [accounts-by-id (subscribe [:accounts-by-id])
+        payees-by-id   (subscribe [:payees-by-id])]
     (fn
       [account-id transaction & {:keys [is-selected?]}]
       (let [splits       (:splits transaction)
@@ -68,56 +68,92 @@
                           {:account-id account-id
                            :transaction-id (:id transaction)}))}
           [:span.col-sm-2 (:date transaction)]
-          [:span.col-sm-2 (->> transaction :payee-id (get @payees) :name)]
-          [:span.col-sm-3 (account-to-show @accounts other-splits)]
+          [:span.col-sm-2 (->> transaction :payee-id (get @payees-by-id) :name)]
+          [:span.col-sm-3 (account-to-show @accounts-by-id other-splits)]
           [:span.col-sm-3]
           [:span.col-sm-2 (amount-to-show main-split)]]))))
 
+(defn- editor-div
+  [width content]
+  [:div.buckit--ledger-editor-input {:class (str "col-sm-" width)} content])
+
 (defn- input
-  [& {:keys [id type placeholder width]}]
-  [:div.buckit--ledger-editor-input
-   {:class (str "col-sm-" width)}
-   [:input.form-control.input-sm {:id id :field type :placeholder placeholder}]])
+  [& options]
+  [:input.form-control.input-sm (apply hash-map options)])
 
-(def date-editor-template
-  (input :id :transaction.date :type :text :placeholder "Date" :width 2))
+(defn date-editor-template
+  []
+  (editor-div 2 (input :id :transaction.date :field :text :placeholder "Date")))
 
-(def payee-editor-template
-  (input :id :transaction.payee-id :type :text :placeholder "Payee" :width 2))
+(defn payee-editor-template
+  [payees]
+  (editor-div 2 [:select.form-control.input-sm
+                 {:field :list :id :transaction.payee-id}
+                 (for [payee payees]
+                   ^{:key (:id payee)}
+                   [:option
+                    {:key (:id payee) :visible? (constantly true)}
+                    (:name payee)])]))
 
-(defn account-editor-template
-  [split-num]
-  (input :id [:transaction :splits split-num :account-id] :type :text :placeholder "Category" :width 3))
+(defn split-editor-template
+  [split-path accounts]
+  (list
+    ^{:key :account-id}
+    (editor-div 3 [:select.form-control.input-sm
+                   {:field :list :id (conj split-path :account-id)}
+                   (for [account accounts]
+                     ^{:key (:id account)}
+                     [:option
+                      {:key (:id account) :visible? (constantly true)}
+                      (:name account)])])
 
-(defn memo-editor-template
-  [split-num]
-  (input :id [:transaction :splits split-num :memo] :type :text :placeholder "Memo" :width 3))
+    ^{:key :memo}
+    (editor-div 3 (input :id (conj split-path :memo)
+                         :field :text :placeholder "Memo"))
 
-(defn amount-editor-template
-  [split-num]
-  (input :id [:transaction :splits split-num :amount] :type :text :placeholder "Amount" :width 2))
+    ^{:key :amount}
+    (editor-div 2 (input :id (conj split-path :amount)
+                         :field :text :placeholder "Amount"))))
 
 (defn editor
+  ; GRR... reagent-forms doesn't seem to preserve metadata. Otherwise could
+  ; just use lists instead of needing to concatenate vectors. TODO fix or open
+  ; a ticket with reagent-forms
   [account-id transaction]
-  (let [accounts (subscribe [:accounts-by-id])
-        payees   (subscribe [:payees-by-id])
-        form     (reagent/atom {:transaction transaction})]
+  (let [accounts     (subscribe [:accounts])
+        payees       (subscribe [:payees])
+        splits       (:splits transaction)
+        main-split   (split-for-account splits account-id)
+        other-splits (splits-for-other-accounts splits account-id)
+        form         (reagent/atom {:transaction transaction
+                                    :main-split main-split
+                                    ; For some reason, this doesn't work unless
+                                    ; it's a vector. I would guess it's because
+                                    ; (get-in (list 1) [0]) => nil
+                                    :other-splits (vec other-splits)})]
     (fn
       [account-id transaction]
-      (let [main-split   (split-for-account splits account-id)
-            other-splits (splits-for-other-accounts splits account-id)]
-        [:form
-         [:div.row
-          [forms/bind-fields date-editor-template form]
-          [forms/bind-fields payee-editor-template form]
-          [forms/bind-fields (account-editor-template 0) form]
-          [forms/bind-fields (memo-editor-template 0) form]
-          [forms/bind-fields (amount-editor-template 0) form]]
-         [:div.row
-          [:div.col-sm-12
-           [:div.btn-toolbar.pull-right
-            [:button.btn.btn-danger.btn-xs "Cancel"]
-            [:button.btn.btn-success.btn-xs "Save"]]]]]))))
+      [:form
+       [forms/bind-fields
+        (into
+          [:div.row
+           (date-editor-template)
+           (payee-editor-template @payees)]
+          (split-editor-template [:main-split] @accounts))
+        form]
+       (doall
+         (for [i (range (count other-splits))]
+           ^{:key i}
+           [forms/bind-fields 
+            (into
+              [:div.row [:div.col-sm-4]]
+              (split-editor-template [:other-splits i] @accounts))
+            form]))
+       [:div.row
+        [:div.col-sm-12
+         [:div.btn-toolbar.pull-right
+          [:button.btn.btn-danger.btn-xs "Cancel"]
+          [:button.btn.btn-success.btn-xs "Save"]]]]])))
 
 (defn ledger
   [account-id selected-transaction-id & {:keys [edit-selected?]}]

@@ -98,27 +98,27 @@
 (defn split-editor-template
   [split-path accounts]
   (list
-    ^{:key :account-id}
-    (editor-div 3 [:select.form-control.input-sm
-                   {:field :list :id (conj split-path :account-id)}
-                   (for [account accounts]
-                     ^{:key (:id account)}
-                     [:option
-                      {:key (:id account) :visible? (constantly true)}
-                      (:name account)])])
+    (with-meta
+      (editor-div 3 [:select.form-control.input-sm
+                     {:field :list :id (conj split-path :account-id)}
+                     (for [account accounts]
+                       ^{:key (:id account)}
+                       [:option
+                        {:key (:id account) :visible? (constantly true)}
+                        (:name account)])])
+      {:key :account-id})
 
-    ^{:key :memo}
-    (editor-div 3 (input :id (conj split-path :memo)
-                         :field :text :placeholder "Memo"))
+    (with-meta
+      (editor-div 3 (input :id (conj split-path :memo)
+                           :field :text :placeholder "Memo"))
+      {:key :memo})
 
-    ^{:key :amount}
-    (editor-div 2 (input :id (conj split-path :amount)
-                         :field :text :placeholder "Amount"))))
+    (with-meta
+      (editor-div 2 (input :id (conj split-path :amount)
+                           :field :text :placeholder "Amount"))
+      {:key :amount})))
 
 (defn editor
-  ; GRR... reagent-forms doesn't seem to preserve metadata. Otherwise could
-  ; just use lists instead of needing to concatenate vectors. TODO fix or open
-  ; a ticket with reagent-forms
   [account-id transaction]
   (let [accounts     (subscribe [:accounts])
         payees       (subscribe [:payees])
@@ -135,19 +135,19 @@
       [account-id transaction]
       [:form
        [forms/bind-fields
-        (into
-          [:div.row
-           (date-editor-template)
-           (payee-editor-template @payees)]
-          (split-editor-template [:main-split] @accounts))
+        [:div.row
+         (date-editor-template)
+         (payee-editor-template @payees)
+         (split-editor-template [:main-split] @accounts)]
         form]
        (doall
          (for [i (range (count other-splits))]
            ^{:key i}
            [forms/bind-fields 
-            (into
-              [:div.row [:div.col-sm-4]]
-              (split-editor-template [:other-splits i] @accounts))
+            [:div.row
+             [:div.col-sm-4]
+             (let [x (split-editor-template [:other-splits i] @accounts)]
+               x)]
             form]))
        [:div.row
         [:div.col-sm-12

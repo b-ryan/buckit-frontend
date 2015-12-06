@@ -8,5 +8,5 @@
   []
   (core/main))
 
-(core/initialize-db)
+(core/init!)
 (core/main)

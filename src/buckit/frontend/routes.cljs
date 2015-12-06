@@ -63,9 +63,14 @@
   []
   (js/console.log "404"))
 
+(defn go-to
+  [url]
+  (set! (.-location js/document) url))
+
 (secretary/set-config! :prefix "#")
 
-(defonce history
+(defn init!
+  []
   (doto (History.)
         (goog.events/listen EventType.NAVIGATE
                             (fn [event]
@@ -74,7 +79,3 @@
         ; Note that the event listener above MUST be registered BEFORE calling
         ; .setEnabled so that we capture the first event
         (.setEnabled true)))
-
-(defn go-to
-  [url]
-  (set! (.-location js/document) url))

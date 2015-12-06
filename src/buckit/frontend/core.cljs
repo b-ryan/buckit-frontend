@@ -6,9 +6,10 @@
             [buckit.frontend.routes]
             [buckit.frontend.views.core :as views.core]))
 
-(defn initialize-db
+(defn init!
   []
-  (dispatch-sync [:initialize-db]))
+  (dispatch-sync [:initialize-db])
+  (buckit.frontend.routes/init!))
 
 (defn main
   []

@@ -1,5 +1,6 @@
 (ns buckit.frontend.views.transactions
-  (:require [buckit.frontend.routes :as routes]
+  (:require [buckit.frontend.keyboard :as keyboard]
+            [buckit.frontend.routes :as routes]
             [re-frame.core :refer [subscribe]]
             [reagent.core :as reagent]
             [reagent-forms.core :as forms]))
@@ -51,7 +52,7 @@
     [:span.col-sm-3 "Memo"]
     [:span.col-sm-2 "Amount"]]])
 
-(defn ledger-row
+(defn- ledger-row
   [account-id transaction & {:keys [is-selected?]}]
   (let [accounts-by-id (subscribe [:accounts-by-id])
         payees-by-id   (subscribe [:payees-by-id])]
@@ -81,11 +82,11 @@
   [& options]
   [:input.form-control.input-sm (apply hash-map options)])
 
-(defn date-editor-template
+(defn- date-editor-template
   []
   (editor-div 2 (input :id :transaction.date :field :text :placeholder "Date")))
 
-(defn payee-editor-template
+(defn- payee-editor-template
   [payees]
   (editor-div 2 [:select.form-control.input-sm
                  {:field :list :id :transaction.payee-id}
@@ -95,7 +96,7 @@
                     {:key (:id payee) :visible? (constantly true)}
                     (:name payee)])]))
 
-(defn split-editor-template
+(defn- split-editor-template
   [split-path accounts]
   (list
     (with-meta
@@ -118,7 +119,7 @@
                            :field :numeric :placeholder "Amount"))
       {:key :amount})))
 
-(defn editor
+(defn- editor
   [account-id transaction]
   (let [accounts     (subscribe [:accounts])
         payees       (subscribe [:payees])
@@ -130,11 +131,20 @@
                                     ; For some reason, this doesn't work unless
                                     ; it's a vector. I would guess it's because
                                     ; (get-in (list 1) [0]) => nil
-                                    :other-splits (vec other-splits)})]
+                                    :other-splits (vec other-splits)})
+        cancel       #(routes/go-to
+                        (routes/account-transaction-details-url
+                          {:account-id account-id
+                           :transaction-id (:id transaction)}))
+        save         #(js/console.log (clj->js @form))]
     (fn
       [account-id transaction]
       [forms/bind-fields
        [:form
+        {:on-key-down (fn
+                        [e]
+                        (when (= (.-which e) keyboard/escape)
+                          (cancel)))}
         [:div.row
          (date-editor-template)
          (payee-editor-template @payees)
@@ -148,18 +158,15 @@
         [:div.row
          [:div.col-sm-12
           [:div.btn-toolbar.pull-right
-           [:button.btn.btn-danger.btn-xs
-            {:on-click #(routes/go-to
-                          (routes/account-transaction-details-url
-                            {:account-id account-id
-                             :transaction-id (:id transaction)}))}
-            "Cancel"]
-           [:button.btn.btn-success.btn-xs
-            {:on-click #(js/console.log (clj->js @form))}
-            "Save"]]]]]
+           [:input.btn.btn-danger.btn-xs {:type "button"
+                                          :on-click cancel
+                                          :value "Cancel"}]
+           [:input.btn.btn-success.btn-xs {:type "submit"
+                                           :on-click save
+                                           :value "Save"}]]]]]
        form])))
 
-(defn ledger
+(defn- ledger
   [account-id selected-transaction-id & {:keys [edit-selected?]}]
   (let [transactions (subscribe [:transactions])]
     (fn

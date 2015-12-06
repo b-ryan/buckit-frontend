@@ -24,10 +24,10 @@
   (remove #(= (:account-id %) account-id) splits))
 
 (defn- account-to-show
-  [accounts-by-id other-splits]
+  [accounts other-splits]
   (if (> (count other-splits) 1)
     "Splits"
-    (->> other-splits first :account-id (get accounts-by-id) :name)))
+    (->> other-splits first :account-id (get accounts) :name)))
 
 (defn- amount-to-show
   [main-split]
@@ -54,8 +54,8 @@
 
 (defn- ledger-row
   [account-id transaction & {:keys [is-selected?]}]
-  (let [accounts-by-id (subscribe [:accounts-by-id])
-        payees-by-id   (subscribe [:payees-by-id])]
+  (let [accounts (subscribe [:accounts])
+        payees   (subscribe [:payees])]
     (fn
       [account-id transaction & {:keys [is-selected?]}]
       (let [splits       (:splits transaction)
@@ -69,8 +69,8 @@
                           {:account-id account-id
                            :transaction-id (:id transaction)}))}
           [:span.col-sm-2 (:date transaction)]
-          [:span.col-sm-2 (->> transaction :payee-id (get @payees-by-id) :name)]
-          [:span.col-sm-3 (account-to-show @accounts-by-id other-splits)]
+          [:span.col-sm-2 (->> transaction :payee-id (get @payees) :name)]
+          [:span.col-sm-3 (account-to-show @accounts other-splits)]
           [:span.col-sm-3]
           [:span.col-sm-2 (amount-to-show main-split)]]))))
 
@@ -96,10 +96,10 @@
   [payees]
   (editor-div 2 [:select.form-control.input-sm
                  {:field :list :id :transaction.payee-id}
-                 (for [payee payees]
-                   ^{:key (:id payee)}
+                 (for [[payee-id payee] payees]
+                   ^{:key payee-id}
                    [:option
-                    {:key (:id payee) :visible? (constantly true)}
+                    {:key payee-id :visible? (constantly true)}
                     (:name payee)])]))
 
 (defn- split-editor-template
@@ -108,10 +108,10 @@
     (with-meta
       (editor-div 3 [:select.form-control.input-sm
                      {:field :list :id (conj split-path :account-id)}
-                     (for [account accounts]
-                       ^{:key (:id account)}
+                     (for [[account-id account] accounts]
+                       ^{:key account-id}
                        [:option
-                        {:key (:id account) :visible? (constantly true)}
+                        {:key account-id :visible? (constantly true)}
                         (:name account)])])
       {:key :account-id})
 

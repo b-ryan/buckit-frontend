@@ -21,12 +21,11 @@
       []
       [:ul.nav.buckit--sidebar
        (doall
-         (for [account @accounts
+         (for [[account-id account] @accounts
                :when (show-account? account)
-               :let [account-id (:id account)
-                     href       (routes/account-transactions-url {:account-id account-id})
-                     active?    (and (contains? matching-routes @url-path)
-                                     (= account-id (:account-id @url-params)))]]
+               :let [href    (routes/account-transactions-url {:account-id account-id})
+                     active? (and (contains? matching-routes @url-path)
+                                  (= account-id (:account-id @url-params)))]]
            ^{:key account-id}
            [:li {:class (when active? "active")}
             [:a {:href href} (:name account)

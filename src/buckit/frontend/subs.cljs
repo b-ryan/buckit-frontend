@@ -31,17 +31,9 @@
     (reaction (:accounts @db))))
 
 (register-sub
-  :accounts-by-id
-  (lookup-sub :accounts))
-
-(register-sub
   :payees
   (fn [db _]
     (reaction (:payees @db))))
-
-(register-sub
-  :payees-by-id
-  (lookup-sub :payees))
 
 (register-sub
   :transactions

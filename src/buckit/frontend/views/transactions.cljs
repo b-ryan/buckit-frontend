@@ -82,9 +82,15 @@
   [& options]
   [:input.form-control.input-sm (apply hash-map options)])
 
+(def initial-focus-wrapper
+  ; TODO move
+  (with-meta identity
+    {:component-did-mount #(.focus (reagent/dom-node %))}))
+
 (defn- date-editor-template
   []
-  (editor-div 2 (input :id :transaction.date :field :text :placeholder "Date")))
+  (editor-div 2 [initial-focus-wrapper
+                 (input :id :transaction.date :field :text :placeholder "Date")]))
 
 (defn- payee-editor-template
   [payees]
@@ -141,10 +147,7 @@
       [account-id transaction]
       [forms/bind-fields
        [:form
-        {:on-key-down (fn
-                        [e]
-                        (when (= (.-which e) keyboard/escape)
-                          (cancel)))}
+        {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel))}
         [:div.row
          (date-editor-template)
          (payee-editor-template @payees)

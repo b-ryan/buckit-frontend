@@ -1,7 +1,11 @@
 (ns buckit.frontend.views.transactions
   (:require [buckit.frontend.keyboard :as keyboard]
+            [buckit.frontend.models.account :as models.account]
+            [buckit.frontend.models.split :as models.split]
+            [buckit.frontend.models.transaction :as models.payee]
+            [buckit.frontend.models.transaction :as models.transaction]
             [buckit.frontend.routes :as routes]
-            [re-frame.core :refer [subscribe]]
+            [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as reagent]
             [reagent-forms.core :as forms]))
 
@@ -12,22 +16,26 @@
   [account-id transaction]
   {:pre [(integer? account-id)]}
   (let [splits      (:splits transaction)
-        account-ids (map :account-id splits)]
+        account-ids (map models.split/account-id splits)]
     (some #{account-id} account-ids)))
 
 (defn- split-for-account
   [splits account-id]
-  (first (filter #(= (:account-id %) account-id) splits)))
+  (first (filter #(= (models.split/account-id %) account-id) splits)))
 
 (defn- splits-for-other-accounts
   [splits account-id]
-  (remove #(= (:account-id %) account-id) splits))
+  (remove #(= (models.split/account-id %) account-id) splits))
 
 (defn- account-to-show
   [accounts other-splits]
   (if (> (count other-splits) 1)
     "Splits"
-    (->> other-splits first :account-id (get accounts) :name)))
+    (->> other-splits
+         first
+         models.split/account-id
+         (get accounts)
+         models.account/name)))
 
 (defn- amount-to-show
   [main-split]
@@ -67,9 +75,12 @@
                           routes/account-transaction-edit-url
                           routes/account-transaction-details-url)
                           {:account-id account-id
-                           :transaction-id (:id transaction)}))}
+                           :transaction-id (models.transaction/id transaction)}))}
           [:span.col-sm-2 (:date transaction)]
-          [:span.col-sm-2 (->> transaction :payee-id (get @payees) :name)]
+          [:span.col-sm-2 (->> transaction
+                               models.transaction/payee-id
+                               (get @payees)
+                               models.payee/name)]
           [:span.col-sm-3 (account-to-show @accounts other-splits)]
           [:span.col-sm-3]
           [:span.col-sm-2 (amount-to-show main-split)]]))))
@@ -90,38 +101,39 @@
 (defn- date-editor-template
   []
   (editor-div 2 [initial-focus-wrapper
-                 (input :id :transaction.date :field :text :placeholder "Date")]))
+                 (input :id [:transaction models.transaction/date]
+                        :field :text :placeholder "Date")]))
 
 (defn- payee-editor-template
   [payees]
   (editor-div 2 [:select.form-control.input-sm
-                 {:field :list :id :transaction.payee-id}
+                 {:field :list :id [:transaction models.transaction/payee-id]}
                  (for [[payee-id payee] payees]
                    ^{:key payee-id}
                    [:option
                     {:key payee-id :visible? (constantly true)}
-                    (:name payee)])]))
+                    (models.payee/name payee)])]))
 
 (defn- split-editor-template
   [split-path accounts]
   (list
     (with-meta
       (editor-div 3 [:select.form-control.input-sm
-                     {:field :list :id (conj split-path :account-id)}
+                     {:field :list :id (conj split-path models.split/account-id)}
                      (for [[account-id account] accounts]
                        ^{:key account-id}
                        [:option
                         {:key account-id :visible? (constantly true)}
-                        (:name account)])])
+                        (models.account/name account)])])
       {:key :account-id})
 
     (with-meta
-      (editor-div 3 (input :id (conj split-path :memo)
+      (editor-div 3 (input :id (conj split-path models.split/memo)
                            :field :numeric :placeholder "Memo"))
       {:key :memo})
 
     (with-meta
-      (editor-div 2 (input :id (conj split-path :amount)
+      (editor-div 2 (input :id (conj split-path models.split/amount)
                            :field :numeric :placeholder "Amount"))
       {:key :amount})))
 
@@ -141,8 +153,17 @@
         cancel       #(routes/go-to
                         (routes/account-transaction-details-url
                           {:account-id account-id
-                           :transaction-id (:id transaction)}))
-        save         #(js/console.log (clj->js @form))]
+                           :transaction-id (models.transaction/id transaction)}))
+        save         #(let [result      @form
+                            splits      (into [(:main-split result)]
+                                              (:other-splits result))
+                            transaction (-> result
+                                            :transaction
+                                            (assoc :splits splits))]
+                        (let [d (dispatch [:update-transaction transaction])]
+                          (js/console.log (clj->js d))
+                          d)
+                        )]
     (fn
       [account-id transaction]
       [forms/bind-fields
@@ -177,8 +198,9 @@
       [:div.buckit--ledger
        ledger-header
        (doall
-         (for [transaction (filter #(account-in-splits? account-id %) @transactions)
-               :let [transaction-id (:id transaction)
+         (for [transaction (filter #(account-in-splits? account-id %)
+                                   (vals @transactions))
+               :let [transaction-id (models.transaction/id transaction)
                      is-selected?   (= selected-transaction-id transaction-id)]]
            ^{:key transaction-id}
            [:div.container-fluid.buckit--ledger-row

@@ -1,5 +1,5 @@
 (ns buckit.frontend.db
-  (:require [buckit.frontend.accounts :as accounts]))
+  (:require [buckit.frontend.http :as http]))
 
 ;TODO prismatic schema to define db?
 

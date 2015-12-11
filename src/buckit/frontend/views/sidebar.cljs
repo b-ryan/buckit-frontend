@@ -1,11 +1,11 @@
 (ns buckit.frontend.views.sidebar
-  (:require [buckit.frontend.accounts :as accounts]
+  (:require [buckit.frontend.models.account :as models.account]
             [buckit.frontend.routes :as routes]
             [re-frame.core :refer [subscribe]]))
 
 (defn- show-account?
   [account]
-  (contains? accounts/owned-account-types (:type account)))
+  (contains? models.account/owned-account-types (:type account)))
 
 (def ^:private matching-routes
   #{routes/account-transactions

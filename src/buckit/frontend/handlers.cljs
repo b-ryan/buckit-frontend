@@ -7,22 +7,23 @@
 
 (register-handler
   :initialize-db
-  (fn [db _]
-    (doall
-      (for [resource [http/accounts
-                      http/payees
-                      http/transactions]]
-        (go (let [response (<! (http/query resource))]
-              (dispatch [:resource-loaded resource response])))))
-    buckit.db/initial-state))
+  (fn [& _]
+    (let [db buckit.db/initial-state]
+      (doall
+        (for [resource (:pending-initializations db)]
+          (go (let [response (<! (http/query resource))]
+                (dispatch [:resource-loaded resource response])))))
+      db)))
 
 (register-handler
   :resource-loaded
+  ; TODO handle errors
   (fn [db [_ resource response]]
     (let [objs (-> response :body :objects)]
       (js/console.log (str (count objs) " object(s) loaded for resource " resource))
-      (js/console.log (clj->js objs))
-      (assoc db resource (zipmap (map :id objs) objs)))))
+      (-> db
+          (assoc resource (zipmap (map :id objs) objs))
+          (update-in [:pending-initializations] disj resource)))))
 
 (register-handler
   :url-changed

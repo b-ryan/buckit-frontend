@@ -7,9 +7,8 @@
   {:url-path []
    :url-params {}
 
-   :accounts {}
-   :payees {}
-   :transactions {}
+   http/accounts     {}
+   http/payees       {}
+   http/transactions {}
 
-   ; some sort of information about what is loading
-   })
+   :pending-initializations #{http/accounts http/payees http/transactions}})

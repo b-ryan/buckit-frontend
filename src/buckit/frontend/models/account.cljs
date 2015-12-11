@@ -3,6 +3,10 @@
 
 (def id :id)
 (def name :name)
+(def balance :balance)
+(def parent-id :parent_id)
+(def parent-account :parent_account)
+(def type :type)
 
 (def asset
   "Bank accounts are examples of asset accounts. They contain cash or other

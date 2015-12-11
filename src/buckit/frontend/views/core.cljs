@@ -51,7 +51,8 @@
 (defn main
   []
   (let [url-path   (subscribe [:url-path])
-        url-params (subscribe [:url-params])]
+        url-params (subscribe [:url-params])
+        inits      (subscribe [:pending-initializations])]
     (fn
       []
       [:div
@@ -60,4 +61,6 @@
         [:div.row
          [:div.col-sm-2.buckit--sidebar-wrapper [views.sidebar/sidebar]]
          [:div.col-sm-10.col-sm-offset-2.buckit--main
-          (main-content @url-path @url-params)]]]])))
+          (main-content @url-path @url-params)]
+         (when (seq @inits)
+           [:div.buckit--loading-overlay [:div.buckit--spinner.center-block]])]]])))

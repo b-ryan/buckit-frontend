@@ -39,3 +39,8 @@
   :transactions
   (fn [db _]
     (reaction (:transactions @db))))
+
+(register-sub
+  :pending-initializations
+  (fn [db _]
+    (reaction (:pending-initializations @db))))

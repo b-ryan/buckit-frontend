@@ -150,25 +150,26 @@
                                     ; it's a vector. I would guess it's because
                                     ; (get-in (list 1) [0]) => nil
                                     :other-splits (vec other-splits)})
-        cancel       #(routes/go-to
-                        (routes/account-transaction-details-url
-                          {:account-id account-id
-                           :transaction-id (models.transaction/id transaction)}))
-        save         #(let [result      @form
-                            splits      (into [(:main-split result)]
-                                              (:other-splits result))
-                            transaction (-> result
-                                            :transaction
-                                            (assoc :splits splits))]
-                        (let [d (dispatch [:update-transaction transaction])]
-                          (js/console.log (clj->js d))
-                          d)
-                        )]
+        cancel       (fn [e]
+                       (.preventDefault e)
+                       (routes/go-to
+                         (routes/account-transaction-details-url
+                           {:account-id account-id
+                            :transaction-id (models.transaction/id transaction)})))
+        save         (fn [e]
+                       (.preventDefault e)
+                       (let [result      @form
+                             splits      (into [(:main-split result)]
+                                               (:other-splits result))
+                             transaction (-> result
+                                             :transaction
+                                             (assoc :splits splits))]
+                         (dispatch [:update-transaction transaction])))]
     (fn
       [account-id transaction]
       [forms/bind-fields
        [:form
-        {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel))}
+        {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
         [:div.row
          (date-editor-template)
          (payee-editor-template @payees)

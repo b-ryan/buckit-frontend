@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [buckit.frontend.db :as buckit.db]
             [buckit.frontend.http :as http]
+            [buckit.frontend.models.transaction :as models.transaction]
             [cljs.core.async :refer [<!]]
             [re-frame.core :refer [dispatch path register-handler]]))
 
@@ -11,7 +12,7 @@
     (let [db buckit.db/initial-state]
       (doall
         (for [resource (:pending-initializations db)]
-          (go (let [response (<! (http/query resource))]
+          (go (let [response (<! (http/get-many resource))]
                 (dispatch [:resource-loaded resource response])))))
       db)))
 
@@ -34,5 +35,9 @@
 
 (register-handler
   :update-transaction
+  ; TODO handle errors
   (fn [db [_ transaction]]
-    (assoc-in db [:transactions (:id transaction)] transaction)))
+    (let [transaction-id (models.transaction/id transaction)]
+      (go (let [response (<! (http/put http/transactions transaction-id transaction))]
+            (js/console.log (clj->js response))))
+      (assoc-in db [http/transactions transaction-id] transaction))))

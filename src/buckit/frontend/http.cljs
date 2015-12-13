@@ -1,8 +1,9 @@
 (ns buckit.frontend.http
   (:require [cljs-http.client :as http]))
 
-(def accounts :accounts)
-(def payees :payees)
+;TODO move to models.core
+(def accounts     :accounts)
+(def payees       :payees)
 (def transactions :transactions)
 
 (def ^:private base-url "http://localhost:8080/api/")
@@ -10,6 +11,14 @@
 (defn get-many
   [resource]
   (http/get (str base-url (name resource)) {:with-credentials? false}))
+
+(defn query
+  [{:keys [resource id query-params]
+    :or {query-params {}}}]
+  (let [url (str base-url (name resource) (if id (str "/" id) ""))]
+    (http/get url
+              {:with-credentials? false
+               :query-params query-params})))
 
 (defn get-one
   [resource id]

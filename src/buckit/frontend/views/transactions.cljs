@@ -9,16 +9,6 @@
             [reagent.core :as reagent]
             [reagent-forms.core :as forms]))
 
-; TODO this should be moved
-(defn- account-in-splits?
-  "Returns true if any of the splits for the given transaction have the account
-  ID."
-  [account-id transaction]
-  {:pre [(integer? account-id)]}
-  (let [splits      (:splits transaction)
-        account-ids (map models.split/account-id splits)]
-    (some #{account-id} account-ids)))
-
 (defn- split-for-account
   [splits account-id]
   (first (filter #(= (models.split/account-id %) account-id) splits)))
@@ -193,14 +183,13 @@
 
 (defn- ledger
   [account-id selected-transaction-id & {:keys [edit-selected?]}]
-  (let [transactions (subscribe [:transactions])]
+  (let [transactions (subscribe [:account-transactions account-id])]
     (fn
       [account-id selected-transaction-id & {:keys [edit-selected?]}]
       [:div.buckit--ledger
        ledger-header
        (doall
-         (for [transaction (filter #(account-in-splits? account-id %)
-                                   (vals @transactions))
+         (for [transaction (vals @transactions)
                :let [transaction-id (models.transaction/id transaction)
                      is-selected?   (= selected-transaction-id transaction-id)]]
            ^{:key transaction-id}
@@ -213,6 +202,8 @@
 
 (defn transactions
   [account-id selected-transaction-id & {:keys [edit-selected?]}]
+  {:pre [(integer? account-id) (or (nil? selected-transaction-id)
+                                   (integer? selected-transaction-id))]}
   [:div.buckit--transactions-view
    [ledger account-id selected-transaction-id
     :edit-selected? edit-selected?]])

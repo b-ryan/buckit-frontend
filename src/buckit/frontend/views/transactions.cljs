@@ -1,15 +1,17 @@
 (ns buckit.frontend.views.transactions
-  (:require [buckit.frontend.db.query :as db.query]
-            [buckit.frontend.http :as http]
-            [buckit.frontend.keyboard :as keyboard]
-            [buckit.frontend.models.account :as models.account]
-            [buckit.frontend.models.split :as models.split]
+  (:require [buckit.frontend.db.query           :as db.query]
+            [buckit.frontend.http               :as http]
+            [buckit.frontend.keyboard           :as keyboard]
+            [buckit.frontend.models.account     :as models.account]
+            [buckit.frontend.models.core        :as models]
+            [buckit.frontend.models.split       :as models.split]
             [buckit.frontend.models.transaction :as models.payee]
             [buckit.frontend.models.transaction :as models.transaction]
-            [buckit.frontend.routes :as routes]
-            [re-frame.core :refer [dispatch subscribe]]
-            [reagent.core :as reagent]
-            [reagent-forms.core :as forms]))
+            [buckit.frontend.routes             :as routes]
+            [buckit.frontend.utils              :as utils]
+            [re-frame.core                      :refer [dispatch subscribe]]
+            [reagent.core                       :as reagent]
+            [reagent-forms.core                 :as forms]))
 
 (defn- split-for-account
   [splits account-id]
@@ -186,19 +188,20 @@
 (defn- ledger
   [account-id selected-transaction-id & {:keys [edit-selected?]}]
   (let [queries      (subscribe [:queries])
-        _ (js/console.log "account id !!!" account-id)
-        transactions (subscribe [:account-transactions account-id])]
+        transactions (subscribe [:transactions])]
     (fn
       [account-id selected-transaction-id & {:keys [edit-selected?]}]
-      (let [query  [:load-account-transactions account-id]
-            result (get @queries query)]
+      (let [query        [:load-account-transactions account-id]
+            result       (get @queries query)
+            transactions (filter (partial models/account-in-splits? account-id)
+                                 (vals @transactions))]
         (condp = (db.query/status result)
 
           db.query/complete-status
           [:div.buckit--ledger
            ledger-header
            (doall
-             (for [transaction (vals @transactions)
+             (for [transaction transactions
                    :let [transaction-id (models.transaction/id transaction)
                          is-selected?   (= selected-transaction-id transaction-id)]]
                ^{:key transaction-id}

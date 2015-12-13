@@ -4,7 +4,7 @@
             [buckit.frontend.http :as http]
             [buckit.frontend.models.core :as models]
             [buckit.frontend.utils :as utils]
-            [re-frame.core :refer [register-sub]]))
+            [re-frame.core :refer [register-sub subscribe]]))
 
 (register-sub
   :url-path
@@ -35,7 +35,7 @@
   :account-transactions
   (fn [db [_ account-id]]
     {:pre [(integer? account-id)]}
-    (let [transactions (reaction (buckit.db/get-resource @db http/transactions))]
+    (let [transactions (subscribe [:transactions])]
       (reaction (let [r (utils/filter-map-by-v (partial models/account-in-splits? account-id)
                         @transactions)]
                   (js/console.log "account-id" (clj->js account-id))

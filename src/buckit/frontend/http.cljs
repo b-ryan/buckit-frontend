@@ -1,11 +1,6 @@
 (ns buckit.frontend.http
   (:require [cljs-http.client :as http]))
 
-;TODO move to models.core
-(def accounts     :accounts)
-(def payees       :payees)
-(def transactions :transactions)
-
 (def ^:private base-url "http://localhost:8080/api/")
 
 (defn- q-filter->query-param

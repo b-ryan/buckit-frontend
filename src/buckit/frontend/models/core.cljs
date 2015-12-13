@@ -9,6 +9,10 @@
   the id defined in the particular model you are dealing with."
   :id)
 
+(def accounts     :accounts)
+(def payees       :payees)
+(def transactions :transactions)
+
 (defn account-in-splits?
   "Returns true if any of the splits for the given transaction have the account
   ID."

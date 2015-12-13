@@ -1,7 +1,6 @@
 (ns buckit.frontend.subs
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [buckit.frontend.db :as buckit.db]
-            [buckit.frontend.http :as http]
             [buckit.frontend.models.core :as models]
             [buckit.frontend.utils :as utils]
             [re-frame.core :refer [register-sub subscribe]]))
@@ -19,17 +18,17 @@
 (register-sub
   :accounts
   (fn [db _]
-    (reaction (buckit.db/get-resource @db http/accounts))))
+    (reaction (buckit.db/get-resource @db models/accounts))))
 
 (register-sub
   :payees
   (fn [db _]
-    (reaction (buckit.db/get-resource @db http/payees))))
+    (reaction (buckit.db/get-resource @db models/payees))))
 
 (register-sub
   :transactions
   (fn [db _]
-    (reaction (buckit.db/get-resource @db http/transactions))))
+    (reaction (buckit.db/get-resource @db models/transactions))))
 
 (register-sub
   :account-transactions

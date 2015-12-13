@@ -1,6 +1,5 @@
 (ns buckit.frontend.db
-  (:require [buckit.frontend.http :as http]
-            [buckit.frontend.models.core :as models]
+  (:require [buckit.frontend.models.core :as models]
             [buckit.frontend.utils :as utils]))
 
 ;TODO prismatic schema to define db?
@@ -18,10 +17,10 @@
 (def initial-state
   {url-path                []
    url-params              {}
-   resources               {http/accounts     {}
-                            http/payees       {}
-                            http/transactions {}}
-   pending-initializations #{http/accounts http/payees}
+   resources               {models/accounts     {}
+                            models/payees       {}
+                            models/transactions {}}
+   pending-initializations #{models/accounts models/payees}
    queries                 {}})
 
 

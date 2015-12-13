@@ -38,7 +38,7 @@
 (register-handler
   :load-account-transactions
   (fn [db [_ account-id :as query]]
-    (go (let [response (<! (http/get-many http/transactions
+    (go (let [response (<! (http/get-many models/transactions
                                           {:filters [{:name "splits__account_id"
                                                       :op "any"
                                                       :val account-id}]}))]
@@ -53,13 +53,13 @@
             (js/console.log (clj->js transactions))
       (-> db
           (buckit.db/update-query query {db.query/status db.query/complete-status})
-          (buckit.db/inject-resources http/transactions transactions)))))
+          (buckit.db/inject-resources models/transactions transactions)))))
 
 (register-handler
   :update-transaction
   ; TODO handle errors
   (fn [db [_ transaction]]
     (let [transaction-id (models.transaction/id transaction)]
-      (go (let [response (<! (http/put http/transactions transaction-id transaction))]
+      (go (let [response (<! (http/put models/transactions transaction-id transaction))]
             (js/console.log (clj->js response))))
-      (assoc-in db [http/transactions transaction-id] transaction))))
+      (assoc-in db [models/transactions transaction-id] transaction))))

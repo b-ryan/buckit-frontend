@@ -15,5 +15,5 @@
 
 (defn spy
   [x]
-  (js/console.log "spy results: " (clj->js x))
+  (js/console.log "spy results:" (clj->js x))
   x)

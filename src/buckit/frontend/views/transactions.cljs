@@ -1,5 +1,7 @@
 (ns buckit.frontend.views.transactions
-  (:require [buckit.frontend.keyboard :as keyboard]
+  (:require [buckit.frontend.db.query :as db.query]
+            [buckit.frontend.http :as http]
+            [buckit.frontend.keyboard :as keyboard]
             [buckit.frontend.models.account :as models.account]
             [buckit.frontend.models.split :as models.split]
             [buckit.frontend.models.transaction :as models.payee]
@@ -183,22 +185,39 @@
 
 (defn- ledger
   [account-id selected-transaction-id & {:keys [edit-selected?]}]
-  (let [transactions (subscribe [:account-transactions account-id])]
+  (let [queries      (subscribe [:queries])
+        _ (js/console.log "account id !!!" account-id)
+        transactions (subscribe [:account-transactions account-id])]
     (fn
       [account-id selected-transaction-id & {:keys [edit-selected?]}]
-      [:div.buckit--ledger
-       ledger-header
-       (doall
-         (for [transaction (vals @transactions)
-               :let [transaction-id (models.transaction/id transaction)
-                     is-selected?   (= selected-transaction-id transaction-id)]]
-           ^{:key transaction-id}
-           [:div.container-fluid.buckit--ledger-row
-            {:class (when is-selected? "active")}
-            (if (and is-selected? edit-selected?)
-              [editor account-id transaction]
-              [ledger-row account-id transaction
-               :is-selected? (= selected-transaction-id transaction-id)])]))])))
+      (let [query  [:load-account-transactions account-id]
+            result (get @queries query)]
+        (condp = (db.query/status result)
+
+          db.query/complete-status
+          [:div.buckit--ledger
+           ledger-header
+           (doall
+             (for [transaction (vals @transactions)
+                   :let [transaction-id (models.transaction/id transaction)
+                         is-selected?   (= selected-transaction-id transaction-id)]]
+               ^{:key transaction-id}
+               [:div.container-fluid.buckit--ledger-row
+                {:class (when is-selected? "active")}
+                (if (and is-selected? edit-selected?)
+                  [editor account-id transaction]
+                  [ledger-row account-id transaction
+                   :is-selected? (= selected-transaction-id transaction-id)])]))]
+
+          db.query/pending-status
+          [:div.buckit--spinner]
+
+          db.query/error-status
+          [:div "there was an error"]
+
+          (do
+            (js/console.log "dispatching query" (clj->js query))
+            (dispatch query)))))))
 
 (defn transactions
   [account-id selected-transaction-id & {:keys [edit-selected?]}]

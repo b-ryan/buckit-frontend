@@ -57,10 +57,10 @@
       []
       [:div
        [views.navbar/navbar]
-       [:div.container-fluid
-        [:div.row
-         [:div.col-sm-2.buckit--sidebar-wrapper [views.sidebar/sidebar]]
-         [:div.col-sm-10.col-sm-offset-2.buckit--main
-          (main-content @url-path @url-params)]
-         (when (seq @inits)
-           [:div.buckit--loading-overlay [:div.buckit--spinner.center-block]])]]])))
+       (if (seq @inits)
+         [:div.buckit--loading-overlay [:div.buckit--spinner.center-block]]
+         [:div.container-fluid
+          [:div.row
+           [:div.col-sm-2.buckit--sidebar-wrapper [views.sidebar/sidebar]]
+           [:div.col-sm-10.col-sm-offset-2.buckit--main
+            (main-content @url-path @url-params)]]])])))

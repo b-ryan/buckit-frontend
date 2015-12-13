@@ -34,11 +34,20 @@
 (register-sub
   :account-transactions
   (fn [db [_ account-id]]
+    {:pre [(integer? account-id)]}
     (let [transactions (reaction (buckit.db/get-resource @db http/transactions))]
-      (reaction (utils/filter-map-by-v (partial models/account-in-splits? account-id)
-                        @transactions)))))
+      (reaction (let [r (utils/filter-map-by-v (partial models/account-in-splits? account-id)
+                        @transactions)]
+                  (js/console.log "account-id" (clj->js account-id))
+                  (js/console.log "r" (clj->js r))
+                  r)))))
 
 (register-sub
   :pending-initializations
   (fn [db _]
     (reaction (buckit.db/pending-initializations @db))))
+
+(register-sub
+  :queries
+  (fn [db _]
+    (reaction (buckit.db/queries @db))))

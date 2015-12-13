@@ -8,9 +8,20 @@
 
 (def ^:private base-url "http://localhost:8080/api/")
 
+(defn- q-filter->query-param
+  "A \"q\" filter is named such due to the use of Flask-Restless in the
+  backend. See
+  https://flask-restless.readthedocs.org/en/latest/searchformat.html#query-format"
+  [q-filter]
+  (if q-filter
+    {:q (.stringify js/JSON (clj->js q-filter))}
+    {}))
+
 (defn get-many
-  [resource]
-  (http/get (str base-url (name resource)) {:with-credentials? false}))
+  [resource & [q-filter]]
+  (http/get (str base-url (name resource))
+            {:with-credentials? false
+             :query-params (q-filter->query-param q-filter)}))
 
 (defn query
   [{:keys [resource id query-params]

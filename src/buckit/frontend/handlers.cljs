@@ -1,18 +1,18 @@
 (ns buckit.frontend.handlers
-  (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [buckit.frontend.db :as buckit.db]
-            [buckit.frontend.http :as http]
-            [buckit.frontend.models.core :as models]
+  (:require-macros [cljs.core.async.macros      :refer [go]])
+  (:require [buckit.frontend.db                 :as buckit.db]
+            [buckit.frontend.db.query           :as db.query]
+            [buckit.frontend.http               :as http]
+            [buckit.frontend.models.core        :as models]
             [buckit.frontend.models.transaction :as models.transaction]
-            [buckit.frontend.utils :as utils]
-            [cljs.core.async :refer [<!]]
-            [re-frame.core :refer [dispatch path register-handler]]))
+            [buckit.frontend.utils              :as utils]
+            [cljs.core.async                    :refer [<!]]
+            [re-frame.core                      :refer [dispatch path register-handler]]))
 
 (register-handler
   :initialize-db
   (fn [& _]
     (let [db buckit.db/initial-state]
-      (dispatch [:load-transactions 1])
       (doall
         (for [resource (buckit.db/pending-initializations db)]
           (go (let [response (<! (http/get-many resource))]
@@ -36,12 +36,14 @@
         (assoc buckit.db/url-params url-params))))
 
 (register-handler
-  :load-transactions
-  (fn [db [_ account-id]]
-    (let [query {:resource http/transactions :query-params {}}]
-      (go (let [response (<! (http/query query))]
-            (dispatch [:transactions-loaded query response])))
-      (buckit.db/update-query db query {:status :pending}))))
+  :load-account-transactions
+  (fn [db [_ account-id :as query]]
+    (go (let [response (<! (http/get-many http/transactions
+                                          {:filters [{:name "splits__account_id"
+                                                      :op "any"
+                                                      :val account-id}]}))]
+          (dispatch [:transactions-loaded query response])))
+    (buckit.db/update-query db query {db.query/status db.query/pending-status})))
 
 (register-handler
   :transactions-loaded
@@ -50,7 +52,7 @@
     (let [transactions (-> response :body :objects)]
             (js/console.log (clj->js transactions))
       (-> db
-          (buckit.db/update-query query {:status :complete})
+          (buckit.db/update-query query {db.query/status db.query/complete-status})
           (buckit.db/inject-resources http/transactions transactions)))))
 
 (register-handler

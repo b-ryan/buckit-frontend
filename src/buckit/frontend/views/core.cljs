@@ -1,10 +1,10 @@
 (ns buckit.frontend.views.core
-  (:require [buckit.frontend.routes :as routes]
-            [buckit.frontend.views.accounts :as views.accounts]
-            [buckit.frontend.views.navbar :as views.navbar]
-            [buckit.frontend.views.sidebar :as views.sidebar]
+  (:require [buckit.frontend.routes             :as routes]
+            [buckit.frontend.views.accounts     :as views.accounts]
+            [buckit.frontend.views.navbar       :as views.navbar]
+            [buckit.frontend.views.sidebar      :as views.sidebar]
             [buckit.frontend.views.transactions :as views.transactions]
-            [re-frame.core :refer [subscribe]]))
+            [re-frame.core                      :refer [subscribe]]))
 
 (defmulti main-content
   (fn [route] route))

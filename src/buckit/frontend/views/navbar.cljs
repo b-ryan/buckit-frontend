@@ -1,6 +1,6 @@
 (ns buckit.frontend.views.navbar
   (:require [buckit.frontend.routes :as routes]
-            [re-frame.core :refer [subscribe]]))
+            [re-frame.core          :refer [subscribe]]))
 
 (def ^:private sections [{:name "Accounts"
                           :href (routes/accounts-url)

@@ -1,6 +1,6 @@
 (ns buckit.frontend.db
   (:require [buckit.frontend.models.core :as models]
-            [buckit.frontend.utils :as utils]))
+            [buckit.frontend.utils       :as utils]))
 
 ;TODO prismatic schema to define db?
 

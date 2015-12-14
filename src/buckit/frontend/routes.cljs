@@ -1,7 +1,7 @@
 (ns buckit.frontend.routes
   (:require [secretary.core :as secretary :refer-macros [defroute]]
-            [goog.events :as events]
-            [re-frame.core :refer [dispatch dispatch-sync]])
+            [goog.events    :as events]
+            [re-frame.core  :refer [dispatch dispatch-sync]])
   (:import goog.History
            goog.History.EventType))
 

@@ -1,15 +1,15 @@
 (ns buckit.frontend.core
-  (:require [reagent.core :as reagant]
-            [re-frame.core :refer [dispatch dispatch-sync]]
-            [buckit.frontend.handlers]
-            [buckit.frontend.subs]
-            [buckit.frontend.routes]
-            [buckit.frontend.views.core :as views.core]))
+  (:require [buckit.frontend.handlers] ; needs to be required for side effects
+            [buckit.frontend.routes     :as routes]
+            [buckit.frontend.subs] ; needs to be required for side effects
+            [buckit.frontend.views.core :as views.core]
+            [reagent.core               :as reagant]
+            [re-frame.core              :refer [dispatch dispatch-sync]]))
 
 (defn init!
   []
   (dispatch-sync [:initialize-db])
-  (buckit.frontend.routes/init!))
+  (routes/init!))
 
 (defn main
   []

@@ -1,5 +1,5 @@
 (ns buckit.frontend.views.accounts
-  (:require [re-frame.core :refer [subscribe]]
+  (:require [re-frame.core          :refer [subscribe]]
             [buckit.frontend.routes :as routes]))
 
 (defn accounts

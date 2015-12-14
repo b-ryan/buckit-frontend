@@ -1,7 +1,7 @@
 (ns buckit.frontend.views.sidebar
   (:require [buckit.frontend.models.account :as models.account]
-            [buckit.frontend.routes :as routes]
-            [re-frame.core :refer [subscribe]]))
+            [buckit.frontend.routes         :as routes]
+            [re-frame.core                  :refer [subscribe]]))
 
 (defn- show-account?
   [account]

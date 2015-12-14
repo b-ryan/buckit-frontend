@@ -50,7 +50,7 @@
   ; TODO handle errors
   (fn [db [_ query response]]
     (let [transactions (-> response :body :objects)]
-            (js/console.log (clj->js transactions))
+      (js/console.log (clj->js response))
       (-> db
           (buckit.db/update-query query {db.query/status db.query/complete-status})
           (buckit.db/inject-resources models/transactions transactions)))))

@@ -10,6 +10,7 @@
 (def account-details             :account-details)
 (def account-transactions        :account-transactions)
 (def account-transaction-details :account-transaction-details)
+(def account-transaction-create  :account-transaction-create)
 (def account-transaction-edit    :account-transaction-edit)
 (def budget                      :budget)
 
@@ -37,6 +38,12 @@
   "/accounts/:account-id/transactions"
   [account-id]
   (dispatch [:url-changed account-transactions
+             {:account-id (->int account-id)}]))
+
+(defroute account-transaction-create-url
+  "/accounts/:account-id/transactions/create"
+  [account-id]
+  (dispatch [:url-changed account-transaction-create
              {:account-id (->int account-id)}]))
 
 (defroute account-transaction-details-url

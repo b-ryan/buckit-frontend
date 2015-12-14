@@ -9,6 +9,7 @@
 
 (def ^:private matching-routes
   #{routes/account-transactions
+    routes/account-transaction-create
     routes/account-transaction-details
     routes/account-transaction-edit})
 

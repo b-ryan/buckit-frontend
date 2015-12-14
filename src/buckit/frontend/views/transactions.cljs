@@ -5,7 +5,7 @@
             [buckit.frontend.models.account     :as models.account]
             [buckit.frontend.models.core        :as models]
             [buckit.frontend.models.split       :as models.split]
-            [buckit.frontend.models.transaction :as models.payee]
+            [buckit.frontend.models.payee       :as models.payee]
             [buckit.frontend.models.transaction :as models.transaction]
             [buckit.frontend.routes             :as routes]
             [buckit.frontend.utils              :as utils]
@@ -31,16 +31,21 @@
          (get accounts)
          models.account/name)))
 
+(defn- amount-glyphicon
+  "Returns a left or right arrow glyphicon to show whether money left the
+  account or is entering it."
+  [amount]
+  (let [expense? (< amount 0)]
+    (str "glyphicon "
+         (if expense? "glyphicon-arrow-right" "glyphicon-arrow-left")
+         " "
+         (if expense? "expense" "income"))))
+
 (defn- amount-to-show
   [main-split]
-  ; FIXME this is not accessible! Perhaps use negative/positive, separate
-  ; columns, or some other means.
-  (let [amount   (:amount main-split)
-        expense? (< amount 0)]
-    [:span {:class (str "glyphicon "
-                        (if expense? "glyphicon-arrow-right" "glyphicon-arrow-left")
-                        " "
-                        (if expense? "expense" "income"))
+  {:pre [(some? main-split)]}
+  (let [amount   (:amount main-split)]
+    [:span {:class (amount-glyphicon amount)
             :aria-hidden true}
      ; FIXME other currencies?
      (str " $" (js/Math.abs amount))]))
@@ -63,6 +68,7 @@
       (let [splits       (:splits transaction)
             main-split   (split-for-account splits account-id)
             other-splits (splits-for-other-accounts splits account-id)]
+        (assert main-split)
         [:div.row
          {:on-click #(routes/go-to
                        ((if is-selected?
@@ -131,36 +137,49 @@
                            :field :numeric :placeholder "Amount"))
       {:key :amount})))
 
+(defn- editor-cancel-fn
+  [account-id transaction]
+  (fn [e]
+    (.preventDefault e)
+    (routes/go-to
+      (if-let [transaction-id (models.transaction/id transaction)]
+        (routes/account-transaction-details-url
+          {:account-id account-id :transaction-id transaction-id})
+        (routes/account-transactions-url
+          {:account-id account-id})))))
+
+(defn- editor-save-fn
+  [form]
+  (fn [e]
+    (.preventDefault e)
+    (let [result      @form
+          splits      (into [(:main-split result)]
+                            (:other-splits result))
+          transaction (-> result
+                          :transaction
+                          (assoc :splits splits))]
+      (if (models.transaction/id transaction)
+        (dispatch [:update-transaction transaction])
+        (dispatch [:create-transaction transaction])))))
+
 (defn- editor
   [account-id transaction]
-  (let [accounts     (subscribe [:accounts])
-        payees       (subscribe [:payees])
-        splits       (:splits transaction)
-        main-split   (split-for-account splits account-id)
-        other-splits (splits-for-other-accounts splits account-id)
-        form         (reagent/atom {:transaction transaction
-                                    :main-split main-split
-                                    ; For some reason, this doesn't work unless
-                                    ; it's a vector. I would guess it's because
-                                    ; (get-in (list 1) [0]) => nil
-                                    :other-splits (vec other-splits)})
-        cancel       (fn [e]
-                       (.preventDefault e)
-                       (routes/go-to
-                         (routes/account-transaction-details-url
-                           {:account-id account-id
-                            :transaction-id (models.transaction/id transaction)})))
-        save         (fn [e]
-                       (.preventDefault e)
-                       (let [result      @form
-                             splits      (into [(:main-split result)]
-                                               (:other-splits result))
-                             transaction (-> result
-                                             :transaction
-                                             (assoc :splits splits))]
-                         (dispatch [:update-transaction transaction])))]
+  (let [accounts       (subscribe [:accounts])
+        payees         (subscribe [:payees])
+        splits         (:splits transaction)
+        main-split     (split-for-account splits account-id)
+        other-splits   (splits-for-other-accounts splits account-id)
+        form           (reagent/atom {:transaction transaction
+                                      :main-split main-split
+                                      ; For some reason, this doesn't work unless
+                                      ; it's a vector. I would guess it's because
+                                      ; (get-in (list 1) [0]) => nil
+                                      :other-splits (vec other-splits)})
+        cancel         (editor-cancel-fn account-id transaction)
+        save           (editor-save-fn form)]
     (fn
       [account-id transaction]
+      (assert main-split)
       [forms/bind-fields
        [:form
         {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
@@ -185,16 +204,25 @@
                                            :value "Save"}]]]]]
        form])))
 
+(defn- toolbar
+  [{:keys [account-id]}]
+  [:div.buckit--transactions-toolbar
+   [:button.btn.btn-default
+    {:on-click #(routes/go-to (routes/account-transaction-create-url
+                                {:account-id account-id}))}
+    "+ Transaction"]])
+
 (defn- ledger
-  [account-id selected-transaction-id & {:keys [edit-selected?]}]
+  [context]
   (let [queries      (subscribe [:queries])
         transactions (subscribe [:transactions])]
     (fn
-      [account-id selected-transaction-id & {:keys [edit-selected?]}]
+      [{:keys [account-id selected-transaction-id] :as context}]
       (let [query        [:load-account-transactions account-id]
             result       (get @queries query)
             transactions (filter (partial models/account-in-splits? account-id)
                                  (vals @transactions))]
+
         (condp = (db.query/status result)
 
           db.query/complete-status
@@ -207,10 +235,13 @@
                ^{:key transaction-id}
                [:div.container-fluid.buckit--ledger-row
                 {:class (when is-selected? "active")}
-                (if (and is-selected? edit-selected?)
+                (if (and is-selected? (:edit-selected? context))
                   [editor account-id transaction]
                   [ledger-row account-id transaction
-                   :is-selected? (= selected-transaction-id transaction-id)])]))]
+                   :is-selected? (= selected-transaction-id transaction-id)])]))
+           (when (:create-transaction? context)
+             [:div.container-fluid.buckit--ledger-row.active
+              [editor account-id (-> (models.transaction/create account-id))]])]
 
           db.query/pending-status
           [:div.buckit--spinner]
@@ -223,9 +254,25 @@
             (dispatch query)))))))
 
 (defn transactions
-  [account-id selected-transaction-id & {:keys [edit-selected?]}]
-  {:pre [(integer? account-id) (or (nil? selected-transaction-id)
-                                   (integer? selected-transaction-id))]}
-  [:div.buckit--transactions-view
-   [ledger account-id selected-transaction-id
-    :edit-selected? edit-selected?]])
+  "context map:
+
+  :account-id              ID of the account currently being worked on
+  (required)
+
+  :create-transaction?     Indicates whether the editor to create a new
+  transaction should be shown.
+  (optional -- default: false)
+
+  :selected-transaction-id ID of the transaction highlighted or being edited
+  (optional -- default: nil)
+
+  :edit-selected?          Indicaes whether :selected-transaction-id is being
+  edited
+  (optional -- default: false)
+  "
+  [{:keys [account-id selected-transaction-id] :as context}]
+  {:pre [(integer? account-id)
+         (or (nil? selected-transaction-id) (integer? selected-transaction-id))]}
+  [:div.container-fluid.buckit--transactions-view
+   [:div.row [toolbar context]]
+   [:div.row [ledger context]]])

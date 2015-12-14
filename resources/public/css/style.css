@@ -43,6 +43,14 @@ body {
 }
 
 /*
+ * Transactions toolbar
+ */
+.buckit--transactions-toolbar {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/*
  * Ledger
  */
 .buckit--ledger span {
@@ -84,6 +92,13 @@ body {
 
 .buckit--ledger span.income::before {
     color: green;
+}
+
+/*
+ * Transactions view
+ */
+.buckit--transactions-view .buckit--ledger {
+    margin-top: 10px;
 }
 
 /*

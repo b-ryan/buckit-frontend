@@ -1,5 +1,5 @@
 (ns buckit.frontend.models.core
-  (:require [buckit.frontend.models.split :as models.split]
+  (:require [buckit.frontend.models.split       :as models.split]
             [buckit.frontend.models.transaction :as models.transaction]))
 
 (def id
@@ -11,6 +11,7 @@
 
 (def accounts     :accounts)
 (def payees       :payees)
+(def splits       :splits)
 (def transactions :transactions)
 
 (defn account-in-splits?

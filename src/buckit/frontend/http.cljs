@@ -1,5 +1,6 @@
 (ns buckit.frontend.http
-  (:require [cljs-http.client :as http]))
+  (:require [buckit.frontend.utils :as utils]
+            [cljs-http.client      :as http]))
 
 (def ^:private base-url "http://localhost:8080/api/")
 

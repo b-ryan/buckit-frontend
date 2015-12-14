@@ -9,6 +9,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[cljs-http "0.1.35"]
+                 [com.andrewmcveigh/cljs-time "0.3.14"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]

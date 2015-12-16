@@ -43,7 +43,7 @@
                                                       :op "any"
                                                       :val account-id}]}))]
           (dispatch [:transactions-loaded query response])))
-    (buckit.db/update-query db query {db.query/status db.query/pending-status})))
+    (buckit.db/pending-query db query)))
 
 (register-handler
   :transactions-loaded
@@ -51,30 +51,28 @@
   (fn [db [_ query response]]
     (let [transactions (-> response :body :objects)]
       (-> db
-          (buckit.db/update-query query {db.query/status db.query/complete-status})
+          (buckit.db/completed-query query)
           (buckit.db/inject-resources models/transactions transactions)))))
+
+(defn- save-transaction
+  [db query response-chan]
+  (go (let [response (<! response-chan)]
+        (dispatch [:transaction-save-complete query response])))
+  (buckit.db/pending-query db query))
 
 (register-handler
   :create-transaction
-  ; TODO handle errors
   (fn [db [_ transaction :as query]]
-    {:pre [(some? transaction) (nil? (models.transaction/id transaction))]}
-    (go (let [response (<! (http/post models/transactions transaction))]
-          (dispatch [:transaction-save-complete query response])))
-    (buckit.db/update-query db query {db.query/status db.query/pending-status})))
+    (save-transaction db query (http/post models/transactions transaction))))
 
 (register-handler
   :update-transaction
-  ; TODO handle errors
   (fn [db [_ transaction :as query]]
-    {:pre [(some? transaction)]}
-    (let [transaction-id (models.transaction/id transaction)]
-      (go (let [response (<! (http/put models/transactions transaction-id transaction))]
-            (dispatch [:transaction-save-complete query response])))
-      (buckit.db/update-query db query {db.query/status db.query/pending-status}))))
+    (save-transaction db query (http/put models/transactions transaction))))
 
 (register-handler
   :transaction-save-complete
+  ; TODO handle errors
   (fn [db [_ query response]]
     (js/console.log (clj->js query) (clj->js response))
-    (buckit.db/update-query db query {db.query/status db.query/complete-status})))
+    (buckit.db/completed-query db query)))

@@ -1,6 +1,7 @@
 (ns buckit.frontend.http
-  (:require [buckit.frontend.utils :as utils]
-            [cljs-http.client      :as http]))
+  (:require [buckit.frontend.models.core :as models]
+            [buckit.frontend.utils       :as utils]
+            [cljs-http.client            :as http]))
 
 (def ^:private base-url "http://localhost:8080/api/")
 
@@ -33,9 +34,11 @@
 
 (defn post
   [resource body]
-  (http/post (str base-url (name resource)) {:with-credentials? false
-                                             :json-params body}))
+  {:pre [(some? resource) (nil? (models/id resource))]}
+  (http/post (str base-url (name resource))
+             {:with-credentials? false :json-params body}))
 (defn put
-  [resource id body]
-  (http/put (str base-url (name resource) "/" id) {:with-credentials? false
-                                                   :json-params body}))
+  [resource body]
+  {:pre [(some? resource) (some? (models/id resource))]}
+  (http/put (str base-url (name resource) "/" (models/id resource))
+            {:with-credentials? false :json-params body}))

@@ -11,5 +11,4 @@
   [& [_account-id]]
   {id         nil
    account-id _account-id
-   amount     0
-   memo       nil})
+   amount     0})

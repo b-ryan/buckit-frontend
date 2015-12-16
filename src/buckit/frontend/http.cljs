@@ -32,7 +32,7 @@
   (http/get (str base-url (name resource) "/" id) {:with-credentials? false}))
 
 (defn post
-  [resource id body]
+  [resource body]
   (http/post (str base-url (name resource)) {:with-credentials? false
                                              :json-params body}))
 (defn put

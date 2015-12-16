@@ -50,16 +50,31 @@
   ; TODO handle errors
   (fn [db [_ query response]]
     (let [transactions (-> response :body :objects)]
-      (js/console.log (clj->js response))
       (-> db
           (buckit.db/update-query query {db.query/status db.query/complete-status})
           (buckit.db/inject-resources models/transactions transactions)))))
 
 (register-handler
+  :create-transaction
+  ; TODO handle errors
+  (fn [db [_ transaction :as query]]
+    {:pre [(some? transaction) (nil? (models.transaction/id transaction))]}
+    (go (let [response (<! (http/post models/transactions transaction))]
+          (dispatch [:transaction-save-complete query response])))
+    (buckit.db/update-query db query {db.query/status db.query/pending-status})))
+
+(register-handler
   :update-transaction
   ; TODO handle errors
-  (fn [db [_ transaction]]
+  (fn [db [_ transaction :as query]]
+    {:pre [(some? transaction)]}
     (let [transaction-id (models.transaction/id transaction)]
       (go (let [response (<! (http/put models/transactions transaction-id transaction))]
-            (js/console.log (clj->js response))))
-      (assoc-in db [models/transactions transaction-id] transaction))))
+            (dispatch [:transaction-save-complete query response])))
+      (buckit.db/update-query db query {db.query/status db.query/pending-status}))))
+
+(register-handler
+  :transaction-save-complete
+  (fn [db [_ query response]]
+    (js/console.log (clj->js query) (clj->js response))
+    (buckit.db/update-query db query {db.query/status db.query/complete-status})))

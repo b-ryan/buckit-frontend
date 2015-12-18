@@ -98,43 +98,74 @@
   (with-meta identity
     {:component-did-mount #(.focus (reagent/dom-node %))}))
 
+(defn- input-on-change-fn
+  [form path]
+  (fn [e]
+    (swap! form assoc-in path (-> e .-target .-value))))
+
 (defn- date-editor-template
-  []
+  [form]
+  (let [path [:transaction models.transaction/date]]
   (editor-div 2 [initial-focus-wrapper
-                 (input :id [:transaction models.transaction/date]
-                        :field :text :placeholder "Date")]))
+                 (input :type "text" :placeholder "Date"
+                        :value (get-in @form path)
+                        :on-change (input-on-change-fn form path))])))
 
 (defn- payee-editor-template
-  [payees]
-  (editor-div 2 [:select.form-control.input-sm
-                 {:field :list :id [:transaction models.transaction/payee-id]}
-                 (for [[payee-id payee] payees]
-                   ^{:key payee-id}
-                   [:option
-                    {:key payee-id :visible? (constantly true)}
-                    (models.payee/name payee)])]))
+  [form payees]
+  (let [path [:transaction models.transaction/payee-id]]
+    (editor-div 2 [:select.form-control.input-sm
+                   {:type "text"
+                    :value (get-in @form path)
+                    :on-change (input-on-change-fn form path)}
+                   (into (list ^{:key :empty} [:option])
+                         (for [[payee-id payee] @payees]
+                           ^{:key payee-id}
+                           [:option
+                            {:key payee-id :visible? (constantly true)}
+                            (models.payee/name payee)]))])))
+
+(defn- account-editor-template
+  [form accounts split-path]
+  (let [path (conj split-path models.split/account-id)]
+    (editor-div 3 [:select.form-control.input-sm
+                   {:type "text"
+                    :value (get-in @form split-path)
+                    :on-change (input-on-change-fn form split-path)}
+                   (into (list ^{:key :empty} [:option])
+                         (for [[account-id account] @accounts]
+                           ^{:key account-id}
+                           [:option
+                            {:key account-id :visible? (constantly true)}
+                            (models.account/name account)]))])))
+
+(defn- memo-editor-template
+  [form split-path]
+  (let [path (conj split-path models.split/memo)]
+    (editor-div 3 (input :type "number" :placeholder "Memo"
+                         :value (get-in @form path)
+                         :on-change (input-on-change-fn form path)))))
+
+(defn- amount-editor-template
+  [form split-path]
+  (let [path (conj split-path models.split/amount)]
+    (editor-div 2 (input :type "number" :placeholder "Amount"
+                         :value (get-in @form path)
+                         :on-change (input-on-change-fn form path)))))
 
 (defn- split-editor-template
-  [split-path accounts]
+  [form accounts split-path]
   (list
     (with-meta
-      (editor-div 3 [:select.form-control.input-sm
-                     {:field :list :id (conj split-path models.split/account-id)}
-                     (for [[account-id account] accounts]
-                       ^{:key account-id}
-                       [:option
-                        {:key account-id :visible? (constantly true)}
-                        (models.account/name account)])])
+      (account-editor-template form accounts split-path)
       {:key :account-id})
 
     (with-meta
-      (editor-div 3 (input :id (conj split-path models.split/memo)
-                           :field :numeric :placeholder "Memo"))
+      (memo-editor-template form split-path)
       {:key :memo})
 
     (with-meta
-      (editor-div 2 (input :id (conj split-path models.split/amount)
-                           :field :numeric :placeholder "Amount"))
+      (amount-editor-template form split-path)
       {:key :amount})))
 
 (defn- editor-cancel-fn
@@ -157,15 +188,16 @@
                             (:other-splits result))
           transaction (-> result
                           :transaction
-                          (assoc :splits splits))]
-      (if (models.transaction/id transaction)
-        (dispatch [:update-transaction transaction])
-        (dispatch [:create-transaction transaction])))))
+                          (assoc :splits splits))
+          query       [:save-transaction transaction]]
+      (dispatch query)
+      (swap! form assoc :pending-query query))))
 
 (defn- editor
   [account-id transaction]
   (let [accounts       (subscribe [:accounts])
         payees         (subscribe [:payees])
+        queries        (subscribe [:queries])
         splits         (:splits transaction)
         main-split     (split-for-account splits account-id)
         other-splits   (splits-for-other-accounts splits account-id)
@@ -174,35 +206,44 @@
                                       ; For some reason, this doesn't work unless
                                       ; it's a vector. I would guess it's because
                                       ; (get-in (list 1) [0]) => nil
-                                      :other-splits (vec other-splits)})
+                                      :other-splits (vec other-splits)
+                                      :pending-query nil})
         cancel         (editor-cancel-fn account-id transaction)
         save           (editor-save-fn form)]
     (fn
       [account-id transaction]
       (assert main-split)
-      [forms/bind-fields
-       [:form
-        {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
-        [:div.row
-         (date-editor-template)
-         (payee-editor-template @payees)
-         (split-editor-template [:main-split] @accounts)]
-        (doall
-          (for [i (range (count other-splits))]
-            ^{:key i}
-            [:div.row
-             [:div.col-sm-4]
-             (split-editor-template [:other-splits i] @accounts)]))
-        [:div.row
-         [:div.col-sm-12
-          [:div.btn-toolbar.pull-right
-           [:input.btn.btn-danger.btn-xs {:type "button"
-                                          :on-click cancel
-                                          :value "Cancel"}]
-           [:input.btn.btn-success.btn-xs {:type "submit"
-                                           :on-click save
-                                           :value "Save"}]]]]]
-       form])))
+      (let [pending-query (:pending-query @form)
+            query-result  (when pending-query (get @queries pending-query))]
+
+        (js/console.log "pending query:" (clj->js (:pending-query @form)))
+
+        (when (and pending-query (db.query/successful? query-result))
+          (js/setTimeout (fn []
+                           (swap! form assoc :pending-query nil))))
+
+        [:form
+         {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
+         [:div.row
+          (date-editor-template form)
+          (payee-editor-template form payees)
+          (split-editor-template form accounts [:main-split])]
+         (doall
+           (for [i (range (count other-splits))]
+             ^{:key i}
+             [:div.row
+              [:div.col-sm-4]
+              (split-editor-template form accounts [:other-splits i])]))
+         [:div.row
+          [:div.col-sm-12
+           (when pending-query [:p "Saving..."])
+           [:div.btn-toolbar.pull-right
+            [:input.btn.btn-danger.btn-xs {:type "button"
+                                           :on-click cancel
+                                           :value "Cancel"}]
+            [:input.btn.btn-success.btn-xs {:type "submit"
+                                            :on-click save
+                                            :value "Save"}]]]]]))))
 
 (defn- toolbar
   [{:keys [account-id]}]
@@ -219,13 +260,13 @@
     (fn
       [{:keys [account-id selected-transaction-id] :as context}]
       (let [query        [:load-account-transactions account-id]
-            result       (get @queries query)
+            query-result (get @queries query)
             transactions (filter (partial models/account-in-splits? account-id)
                                  (vals @transactions))]
 
-        (condp = (db.query/status result)
+        (cond
 
-          db.query/complete-status
+          (db.query/successful? query-result)
           [:div.buckit--ledger
            ledger-header
            (doall
@@ -243,15 +284,15 @@
              [:div.container-fluid.buckit--ledger-row.active
               [editor account-id (-> (models.transaction/create account-id))]])]
 
-          db.query/pending-status
-          [:div.buckit--spinner]
-
-          db.query/error-status
+          (db.query/failed? query-result)
           [:div "there was an error"]
 
-          (do
-            (js/console.log "dispatching query" (clj->js query))
-            (dispatch query)))))))
+          (db.query/pending? query-result)
+          [:div.buckit--spinner]
+
+          ; otherwise we haven't issued the request to load the transactions
+          :else
+          (dispatch query))))))
 
 (defn transactions
   "context map:

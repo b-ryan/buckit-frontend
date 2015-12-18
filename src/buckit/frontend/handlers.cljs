@@ -54,25 +54,16 @@
           (buckit.db/completed-query query)
           (buckit.db/inject-resources models/transactions transactions)))))
 
-(defn- save-transaction
-  [db query response-chan]
-  (go (let [response (<! response-chan)]
-        (dispatch [:transaction-save-complete query response])))
-  (buckit.db/pending-query db query))
-
 (register-handler
-  :create-transaction
+  :save-transaction
   (fn [db [_ transaction :as query]]
-    (save-transaction db query (http/post models/transactions transaction))))
-
-(register-handler
-  :update-transaction
-  (fn [db [_ transaction :as query]]
-    (save-transaction db query (http/put models/transactions transaction))))
+    (go (let [response (<! (http/save models/transactions transaction))]
+          (dispatch [:transaction-save-complete query response])))
+    (buckit.db/pending-query db query)))
 
 (register-handler
   :transaction-save-complete
   ; TODO handle errors
   (fn [db [_ query response]]
-    (js/console.log (clj->js query) (clj->js response))
+    (js/console.log "HTTP response" (clj->js response))
     (buckit.db/completed-query db query)))

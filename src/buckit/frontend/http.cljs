@@ -34,11 +34,16 @@
 
 (defn post
   [resource body]
-  {:pre [(some? resource) (nil? (models/id resource))]}
+  {:pre [(some? body) (nil? (models/id body))]}
   (http/post (str base-url (name resource))
              {:with-credentials? false :json-params body}))
 (defn put
   [resource body]
-  {:pre [(some? resource) (some? (models/id resource))]}
-  (http/put (str base-url (name resource) "/" (models/id resource))
+  {:pre [(some? body) (some? (models/id body))]}
+  (http/put (str base-url (name resource) "/" (models/id body))
             {:with-credentials? false :json-params body}))
+
+(defn save
+  [resource body]
+  (let [method (if (models/id body) put post)]
+    (method resource body)))

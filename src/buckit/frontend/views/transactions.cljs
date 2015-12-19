@@ -13,14 +13,6 @@
             [reagent.core                       :as reagent]
             [reagent-forms.core                 :as forms]))
 
-(defn- split-for-account
-  [splits account-id]
-  (first (filter #(= (models.split/account-id %) account-id) splits)))
-
-(defn- splits-for-other-accounts
-  [splits account-id]
-  (remove #(= (models.split/account-id %) account-id) splits))
-
 (defn- account-to-show
   [accounts other-splits]
   (if (> (count other-splits) 1)
@@ -66,8 +58,8 @@
     (fn
       [account-id transaction & {:keys [is-selected?]}]
       (let [splits       (:splits transaction)
-            main-split   (split-for-account splits account-id)
-            other-splits (splits-for-other-accounts splits account-id)]
+            main-split   (models.split/split-for-account splits account-id)
+            other-splits (models.split/splits-for-other-accounts splits account-id)]
         (assert main-split)
         [:div.row
          {:on-click #(routes/go-to
@@ -199,8 +191,8 @@
         payees         (subscribe [:payees])
         queries        (subscribe [:queries])
         splits         (:splits transaction)
-        main-split     (split-for-account splits account-id)
-        other-splits   (splits-for-other-accounts splits account-id)
+        main-split     (models.split/split-for-account splits account-id)
+        other-splits   (models.split/splits-for-other-accounts splits account-id)
         form           (reagent/atom {:transaction transaction
                                       :main-split main-split
                                       ; For some reason, this doesn't work unless

@@ -12,3 +12,11 @@
   {id         nil
    account-id _account-id
    amount     0})
+
+(defn split-for-account
+  [splits _account-id]
+  (first (filter #(= (account-id %) _account-id) splits)))
+
+(defn splits-for-other-accounts
+  [splits _account-id]
+  (remove #(= (account-id %) _account-id) splits))

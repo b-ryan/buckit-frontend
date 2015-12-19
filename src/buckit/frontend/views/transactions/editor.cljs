@@ -131,13 +131,8 @@
       (assert main-split)
       (let [pending-query (:pending-query @form)
             query-result  (when pending-query (get @queries pending-query))]
-
-        (js/console.log "pending query:" (clj->js (:pending-query @form)))
-
         (when (and pending-query (db.query/successful? query-result))
-          (js/setTimeout (fn []
-                           (swap! form assoc :pending-query nil))))
-
+          (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
         [:form
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
          [:div.row
@@ -152,11 +147,12 @@
               (split-editor-template form accounts [:other-splits i])]))
          [:div.row
           [:div.col-sm-12
-           (when pending-query [:p "Saving..."])
            [:div.btn-toolbar.pull-right
-            [:input.btn.btn-danger.btn-xs {:type "button"
-                                           :on-click cancel
-                                           :value "Cancel"}]
-            [:input.btn.btn-success.btn-xs {:type "submit"
-                                            :on-click save
-                                            :value "Save"}]]]]]))))
+            [:button.btn.btn-danger.btn-xs
+             {:type "button" :on-click cancel} "Cancel"]
+            [:button.btn.btn-success.btn-xs.has-spinnner
+             {:type "submit" :on-click save
+              :class (when pending-query "show-spinner")
+              :disabled pending-query}
+             [:span.buckit--btn-spinner.glyphicon.glyphicon-refresh]
+             "Save"]]]]]))))

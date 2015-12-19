@@ -1,5 +1,6 @@
 (ns buckit.frontend.views.transactions
   (:require [buckit.frontend.db.query           :as db.query]
+            [buckit.frontend.ui                 :as ui]
             [buckit.frontend.http               :as http]
             [buckit.frontend.keyboard           :as keyboard]
             [buckit.frontend.models.account     :as models.account]
@@ -10,8 +11,7 @@
             [buckit.frontend.routes             :as routes]
             [buckit.frontend.utils              :as utils]
             [re-frame.core                      :refer [dispatch subscribe]]
-            [reagent.core                       :as reagent]
-            [reagent-forms.core                 :as forms]))
+            [reagent.core                       :as reagent]))
 
 (defn- account-to-show
   [accounts other-splits]
@@ -85,23 +85,13 @@
   [& options]
   [:input.form-control.input-sm (apply hash-map options)])
 
-(def initial-focus-wrapper
-  ; TODO move
-  (with-meta identity
-    {:component-did-mount #(.focus (reagent/dom-node %))}))
-
-(defn- input-on-change-fn
-  [form path]
-  (fn [e]
-    (swap! form assoc-in path (-> e .-target .-value))))
-
 (defn- date-editor-template
   [form]
   (let [path [:transaction models.transaction/date]]
-  (editor-div 2 [initial-focus-wrapper
+  (editor-div 2 [ui/initial-focus-wrapper
                  (input :type "text" :placeholder "Date"
                         :value (get-in @form path)
-                        :on-change (input-on-change-fn form path))])))
+                        :on-change (ui/input-change-fn form path))])))
 
 (defn- payee-editor-template
   [form payees]
@@ -109,7 +99,7 @@
     (editor-div 2 [:select.form-control.input-sm
                    {:type "text"
                     :value (get-in @form path)
-                    :on-change (input-on-change-fn form path)}
+                    :on-change (ui/input-change-fn form path)}
                    (into (list ^{:key :empty} [:option])
                          (for [[payee-id payee] @payees]
                            ^{:key payee-id}
@@ -123,7 +113,7 @@
     (editor-div 3 [:select.form-control.input-sm
                    {:type "text"
                     :value (get-in @form split-path)
-                    :on-change (input-on-change-fn form split-path)}
+                    :on-change (ui/input-change-fn form split-path)}
                    (into (list ^{:key :empty} [:option])
                          (for [[account-id account] @accounts]
                            ^{:key account-id}
@@ -136,14 +126,14 @@
   (let [path (conj split-path models.split/memo)]
     (editor-div 3 (input :type "number" :placeholder "Memo"
                          :value (get-in @form path)
-                         :on-change (input-on-change-fn form path)))))
+                         :on-change (ui/input-change-fn form path)))))
 
 (defn- amount-editor-template
   [form split-path]
   (let [path (conj split-path models.split/amount)]
     (editor-div 2 (input :type "number" :placeholder "Amount"
                          :value (get-in @form path)
-                         :on-change (input-on-change-fn form path)))))
+                         :on-change (ui/input-change-fn form path)))))
 
 (defn- split-editor-template
   [form accounts split-path]

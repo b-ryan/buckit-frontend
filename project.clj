@@ -22,6 +22,10 @@
             [lein-figwheel "0.5.0-2" :exclusions [org.clojure/tools.reader
                                                   ring/ring-core]]]
 
+  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
+                                  [org.clojure/tools.nrepl "0.2.10"]]
+                   :plugins [[cider/cider-nrepl "0.10.0"]]}}
+
   :source-paths ["src"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
@@ -64,6 +68,8 @@
 
              ;; Start an nREPL server into the running figwheel process
              :nrepl-port 3450
+             :nrepl-middleware ["cider.nrepl/cider-middleware"
+                                "cemerick.piggieback/wrap-cljs-repl"]
 
              ;; Server Ring Handler (optional)
              ;; if you want to embed a ring handler into the figwheel http-kit

@@ -1,8 +1,5 @@
 (ns buckit.frontend.views.transactions
   (:require [buckit.frontend.db.query                  :as db.query]
-            [buckit.frontend.ui                        :as ui]
-            [buckit.frontend.http                      :as http]
-            [buckit.frontend.keyboard                  :as keyboard]
             [buckit.frontend.models.account            :as models.account]
             [buckit.frontend.models.core               :as models]
             [buckit.frontend.models.split              :as models.split]
@@ -11,8 +8,7 @@
             [buckit.frontend.routes                    :as routes]
             [buckit.frontend.utils                     :as utils]
             [buckit.frontend.views.transactions.editor :as editor]
-            [re-frame.core                             :refer [dispatch subscribe]]
-            [reagent.core                              :as reagent]))
+            [re-frame.core                             :refer [dispatch subscribe]]))
 
 (defn- account-to-show
   [accounts other-splits]

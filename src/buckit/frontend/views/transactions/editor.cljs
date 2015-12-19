@@ -1,10 +1,8 @@
 (ns buckit.frontend.views.transactions.editor
   (:require [buckit.frontend.db.query           :as db.query]
             [buckit.frontend.ui                 :as ui]
-            [buckit.frontend.http               :as http]
             [buckit.frontend.keyboard           :as keyboard]
             [buckit.frontend.models.account     :as models.account]
-            [buckit.frontend.models.core        :as models]
             [buckit.frontend.models.split       :as models.split]
             [buckit.frontend.models.payee       :as models.payee]
             [buckit.frontend.models.transaction :as models.transaction]

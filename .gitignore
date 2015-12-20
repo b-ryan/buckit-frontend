@@ -15,3 +15,4 @@ pom.xml
 /resources/public/bower
 /resources/public/js
 .lein-failures
+.cljs_rhino_repl

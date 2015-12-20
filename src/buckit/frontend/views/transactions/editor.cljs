@@ -19,7 +19,7 @@
   [& options]
   [:input.form-control.input-sm (apply hash-map options)])
 
-(defn- date-editor-template
+(defn- date-editor
   [form]
   (let [path [:transaction models.transaction/date]]
   (editor-div 2 [ui/initial-focus-wrapper
@@ -27,7 +27,7 @@
                         :value (get-in @form path)
                         :on-change (ui/input-change-fn form path))])))
 
-(defn- payee-editor-template
+(defn- payee-editor
   [form payees]
   (let [path [:transaction models.transaction/payee-id]]
     (editor-div 2 [:select.form-control.input-sm
@@ -41,7 +41,7 @@
                             {:key payee-id :visible? (constantly true)}
                             (models.payee/name payee)]))])))
 
-(defn- account-editor-template
+(defn- account-editor
   [form accounts split-path]
   (let [path (conj split-path models.split/account-id)]
     (editor-div 3 [:select.form-control.input-sm
@@ -55,33 +55,33 @@
                             {:key account-id :visible? (constantly true)}
                             (models.account/name account)]))])))
 
-(defn- memo-editor-template
+(defn- memo-editor
   [form split-path]
   (let [path (conj split-path models.split/memo)]
     (editor-div 3 (input :type "number" :placeholder "Memo"
                          :value (get-in @form path)
                          :on-change (ui/input-change-fn form path)))))
 
-(defn- amount-editor-template
+(defn- amount-editor
   [form split-path]
   (let [path (conj split-path models.split/amount)]
     (editor-div 2 (input :type "number" :placeholder "Amount"
                          :value (get-in @form path)
                          :on-change (ui/input-change-fn form path)))))
 
-(defn- split-editor-template
+(defn- split-editor
   [form accounts split-path]
   (list
     (with-meta
-      (account-editor-template form accounts split-path)
+      (account-editor form accounts split-path)
       {:key :account-id})
 
     (with-meta
-      (memo-editor-template form split-path)
+      (memo-editor form split-path)
       {:key :memo})
 
     (with-meta
-      (amount-editor-template form split-path)
+      (amount-editor form split-path)
       {:key :amount})))
 
 (defn- editor-cancel-fn
@@ -133,18 +133,18 @@
             query-result  (when pending-query (get @queries pending-query))]
         (when (and pending-query (db.query/successful? query-result))
           (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
-        [:form
+        [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
          [:div.row
-          (date-editor-template form)
-          (payee-editor-template form payees)
-          (split-editor-template form accounts [:main-split])]
+          (date-editor form)
+          (payee-editor form payees)
+          (split-editor form accounts [:main-split])]
          (doall
            (for [i (range (count other-splits))]
              ^{:key i}
              [:div.row
               [:div.col-sm-4]
-              (split-editor-template form accounts [:other-splits i])]))
+              (split-editor form accounts [:other-splits i])]))
          [:div.row
           [:div.col-sm-12
            [:div.btn-toolbar.pull-right
@@ -154,5 +154,6 @@
              {:type "submit" :on-click save
               :class (when pending-query "show-spinner")
               :disabled pending-query}
-             [:span.buckit--btn-spinner.glyphicon.glyphicon-refresh]
-             "Save"]]]]]))))
+             (if pending-query
+               [:span.buckit--btn-spinner.glyphicon.glyphicon-refresh]
+               "Save")]]]]]))))

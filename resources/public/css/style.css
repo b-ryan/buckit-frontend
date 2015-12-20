@@ -109,23 +109,8 @@ body {
     padding: 20px;
 }
 
-/* The below is adapted from the make-sm-column-offset and make-sm-column
- * mixins. Cannot figure out how to use less or sass right now, so using the
- * mixins is not straightforward.
- * https://github.com/twbs/bootstrap-sass/blob/master/assets/stylesheets/bootstrap/mixins/_grid.scss
- */
-/* FIXME what to do on mobile? */
-@media (min-width: 768px) {
-    .buckit--transactions-view > .buckit--transaction-editor {
-        position: fixed;
-        bottom: 0;
-        left: 16.66666667%;
-        width: 83.33333333%;
-        border-top: 1px solid #eee;
-        padding: 10px;
-        padding-left: 20px;
-        padding-right: 20px;
-    }
+.buckit--transaction-editor button.btn-xs {
+    width: 50px;
 }
 
 /*

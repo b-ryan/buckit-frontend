@@ -133,6 +133,8 @@
             query-result  (when pending-query (get @queries pending-query))]
         (when (and pending-query (db.query/successful? query-result))
           (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
+        (when (and pending-query (db.query/failed? query-result))
+          (js/setTimeout (fn [] (swap! form assoc :error "some error"))))
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
          [:div.row
@@ -146,7 +148,9 @@
               [:div.col-sm-4]
               (split-editor form accounts [:other-splits i])]))
          [:div.row
-          [:div.col-sm-12
+          [:div.col-sm-8
+           [:p.text-danger (:error @form)]]
+          [:div.col-sm-4
            [:div.btn-toolbar.pull-right
             [:button.btn.btn-danger.btn-xs
              {:type "button" :on-click cancel} "Cancel"]

@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros      :refer [go]])
   (:require [buckit.frontend.db                 :as buckit.db]
             [buckit.frontend.db.query           :as db.query]
-            [buckit.frontend.http               :as http]
+            [buckit.frontend.backend            :as backend]
             [buckit.frontend.models.core        :as models]
             [buckit.frontend.models.transaction :as models.transaction]
             [buckit.frontend.utils              :as utils]
@@ -15,7 +15,7 @@
     (let [db buckit.db/initial-state]
       (doall
         (for [resource (buckit.db/pending-initializations db)]
-          (go (let [response (<! (http/get-many resource))]
+          (go (let [response (<! (backend/get-many resource))]
                 (dispatch [:resource-loaded resource response])))))
       db)))
 
@@ -38,7 +38,7 @@
 (register-handler
   :load-account-transactions
   (fn [db [_ account-id :as query]]
-    (go (let [response (<! (http/get-many models/transactions
+    (go (let [response (<! (backend/get-many models/transactions
                                           {:filters [{:name "splits__account_id"
                                                       :op "any"
                                                       :val account-id}]}))]
@@ -51,13 +51,13 @@
   (fn [db [_ query response]]
     (let [transactions (-> response :body :objects)]
       (-> db
-          (buckit.db/completed-query query)
+          (buckit.db/successful-query query)
           (buckit.db/inject-resources models/transactions transactions)))))
 
 (register-handler
   :save-transaction
   (fn [db [_ transaction :as query]]
-    (go (let [response (<! (http/save models/transactions transaction))]
+    (go (let [response (<! (backend/save models/transactions transaction))]
           (dispatch [:transaction-save-complete query response])))
     (buckit.db/pending-query db query)))
 
@@ -66,4 +66,4 @@
   ; TODO handle errors
   (fn [db [_ query response]]
     (js/console.log "HTTP response" (clj->js response))
-    (buckit.db/completed-query db query)))
+    (buckit.db/successful-query db query)))

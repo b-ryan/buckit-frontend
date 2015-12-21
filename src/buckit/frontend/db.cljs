@@ -45,13 +45,14 @@
   [db query m]
   (assoc-in db [queries query] m))
 
-(defn completed-query
+(defn successful-query
   [db query]
   (update-query db query {db.query/status db.query/complete-status}))
 
-(defn errored-query
-  [db query]
-  (update-query db query {db.query/status db.query/error-status}))
+(defn failed-query
+  [db query reason]
+  (update-query db query {db.query/status db.query/error-status
+                          db.query/reason reason}))
 
 (defn pending-query
   [db query]

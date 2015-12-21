@@ -1,6 +1,7 @@
 (ns buckit.frontend.db.query)
 
 (def status :status)
+(def reason :reason)
 
 (def complete-status :complete) ; FIXME successful
 (def error-status    :error) ; FIXME failed

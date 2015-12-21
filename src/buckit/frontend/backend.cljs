@@ -1,4 +1,4 @@
-(ns buckit.frontend.http
+(ns buckit.frontend.backend
   (:require [buckit.frontend.models.core :as models]
             [buckit.frontend.utils       :as utils]
             [cljs-http.client            :as http]))

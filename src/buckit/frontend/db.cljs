@@ -45,6 +45,10 @@
   [db query m]
   (assoc-in db [queries query] m))
 
+(defn pending-query
+  [db query]
+  (update-query db query {db.query/status db.query/pending-status}))
+
 (defn successful-query
   [db query]
   (update-query db query {db.query/status db.query/complete-status}))
@@ -54,6 +58,8 @@
   (update-query db query {db.query/status db.query/error-status
                           db.query/reason reason}))
 
-(defn pending-query
-  [db query]
-  (update-query db query {db.query/status db.query/pending-status}))
+(defn complete-query
+  [db query response]
+  (if (:success response)
+    (successful-query db query)
+    (failed-query db query (:error-text response))))

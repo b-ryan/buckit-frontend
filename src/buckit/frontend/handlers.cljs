@@ -7,6 +7,7 @@
             [buckit.frontend.models.transaction :as models.transaction]
             [buckit.frontend.utils              :as utils]
             [cljs.core.async                    :refer [<!]]
+            [cljs-http.client                   :as http]
             [re-frame.core                      :refer [dispatch path register-handler]]))
 
 (register-handler
@@ -39,9 +40,9 @@
   :load-account-transactions
   (fn [db [_ account-id :as query]]
     (go (let [response (<! (backend/get-many models/transactions
-                                          {:filters [{:name "splits__account_id"
-                                                      :op "any"
-                                                      :val account-id}]}))]
+                                             {:filters [{:name "splits__account_id"
+                                                         :op "any"
+                                                         :val account-id}]}))]
           (dispatch [:transactions-loaded query response])))
     (buckit.db/pending-query db query)))
 
@@ -63,7 +64,5 @@
 
 (register-handler
   :transaction-save-complete
-  ; TODO handle errors
   (fn [db [_ query response]]
-    (js/console.log "HTTP response" (clj->js response))
-    (buckit.db/successful-query db query)))
+    (buckit.db/complete-query db query response)))

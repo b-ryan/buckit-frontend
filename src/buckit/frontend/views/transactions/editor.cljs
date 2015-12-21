@@ -131,10 +131,11 @@
       (assert main-split)
       (let [pending-query (:pending-query @form)
             query-result  (when pending-query (get @queries pending-query))]
+        (js/console.log "query result" (clj->js query-result))
         (when (and pending-query (db.query/successful? query-result))
           (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
         (when (and pending-query (db.query/failed? query-result))
-          (js/setTimeout (fn [] (swap! form assoc :error "some error"))))
+          (js/setTimeout (fn [] (swap! form assoc :pending-query nil :error "some error"))))
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
          [:div.row

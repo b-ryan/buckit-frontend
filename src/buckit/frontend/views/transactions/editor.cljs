@@ -107,7 +107,12 @@
                           (assoc :splits splits))
           query       [:save-transaction transaction]]
       (dispatch query)
-      (swap! form assoc :pending-query query))))
+      (swap! form assoc
+             :pending-query query
+             :error         nil))))
+
+(def generic-save-error
+  "An error occurred while saving.")
 
 (defn editor
   [account-id transaction]
@@ -117,13 +122,14 @@
         splits         (:splits transaction)
         main-split     (models.split/split-for-account splits account-id)
         other-splits   (models.split/splits-for-other-accounts splits account-id)
-        form           (reagent/atom {:transaction transaction
-                                      :main-split main-split
+        form           (reagent/atom {:transaction   transaction
+                                      :main-split    main-split
                                       ; For some reason, this doesn't work unless
                                       ; it's a vector. I would guess it's because
                                       ; (get-in (list 1) [0]) => nil
-                                      :other-splits (vec other-splits)
-                                      :pending-query nil})
+                                      :other-splits  (vec other-splits)
+                                      :pending-query nil
+                                      :error         nil})
         cancel         (editor-cancel-fn account-id transaction)
         save           (editor-save-fn form)]
     (fn
@@ -135,7 +141,9 @@
         (when (and pending-query (db.query/successful? query-result))
           (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
         (when (and pending-query (db.query/failed? query-result))
-          (js/setTimeout (fn [] (swap! form assoc :pending-query nil :error "some error"))))
+          (js/setTimeout (fn [] (swap! form assoc
+                                       :pending-query nil
+                                       :error         generic-save-error))))
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
          [:div.row

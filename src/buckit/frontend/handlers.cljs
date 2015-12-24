@@ -48,7 +48,6 @@
 
 (register-handler
   :transactions-loaded
-  ; TODO handle errors
   (fn [db [_ query response]]
     (let [transactions (-> response :body :objects)]
       (-> db

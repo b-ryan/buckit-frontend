@@ -1,5 +1,6 @@
 (ns buckit.frontend.views.transactions.editor
   (:require [buckit.frontend.db.query           :as db.query]
+            [buckit.frontend.i18n               :as i18n]
             [buckit.frontend.ui                 :as ui]
             [buckit.frontend.keyboard           :as keyboard]
             [buckit.frontend.models.account     :as models.account]
@@ -111,8 +112,6 @@
              :pending-query query
              :error         nil))))
 
-(def generic-save-error "An error occurred while saving.")
-
 (defn editor
   [account-id transaction]
   (let [accounts       (subscribe [:accounts])
@@ -142,7 +141,7 @@
         (when (and pending-query (db.query/failed? query-result))
           (js/setTimeout (fn [] (swap! form assoc
                                        :pending-query nil
-                                       :error         generic-save-error))))
+                                       :error         i18n/generic-save-error))))
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
          [:div.row

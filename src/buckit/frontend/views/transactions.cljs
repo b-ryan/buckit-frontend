@@ -1,5 +1,6 @@
 (ns buckit.frontend.views.transactions
   (:require [buckit.frontend.db.query                  :as db.query]
+            [buckit.frontend.i18n                      :as i18n]
             [buckit.frontend.models.account            :as models.account]
             [buckit.frontend.models.core               :as models]
             [buckit.frontend.models.split              :as models.split]
@@ -114,7 +115,7 @@
               [editor/editor account-id (-> (models.transaction/create account-id))]])]
 
           (db.query/failed? query-result)
-          [:div "there was an error"]
+          [:div [:p.text-danger i18n/transactions-not-loaded-error]]
 
           (db.query/pending? query-result)
           [:div.buckit--spinner]

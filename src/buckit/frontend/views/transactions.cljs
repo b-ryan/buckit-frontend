@@ -89,7 +89,7 @@
         transactions (subscribe [:transactions])]
     (fn
       [{:keys [account-id selected-transaction-id] :as context}]
-      (let [query-id     [:transactions account-id]
+      (let [query-id     [:load-transactions account-id]
             query        {:query-id query-id
                           :method   :get-many
                           :resource models/transactions

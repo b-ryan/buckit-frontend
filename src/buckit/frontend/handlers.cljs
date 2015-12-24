@@ -56,16 +56,3 @@
       (if (:success response)
         (buckit.db/inject-resources db resource objs)
         db))))
-
-(register-handler
-  :save-transaction
-  (fn [db [_ transaction :as query]]
-    (go (let [response (<! (backend/save models/transactions transaction))]
-          (dispatch [:transaction-save-complete query response])))
-    (buckit.db/update-query db query db.query/set-pending)))
-
-(register-handler
-  :transaction-save-complete
-  (fn [db [_ query response]]
-    (js/console.log "response" (clj->js response))
-    (buckit.db/update-query db query db.query/set-complete response)))

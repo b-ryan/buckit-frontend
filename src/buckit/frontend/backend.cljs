@@ -7,7 +7,7 @@
 
 (defn valid-method?
   [method]
-  (contains? #{:get-many :get-one :post :put} method))
+  (contains? #{:get-many :get-one :post :put :save} method))
 
 (defn returns-many?
   "The types of methods that will contain a list of items in the response."
@@ -77,3 +77,7 @@
 (defmethod request :put
   [_ & args]
   (apply put args))
+
+(defmethod request :save
+  [_ & args]
+  (apply save args))

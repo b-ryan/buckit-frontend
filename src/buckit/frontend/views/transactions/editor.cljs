@@ -4,6 +4,7 @@
             [buckit.frontend.ui                 :as ui]
             [buckit.frontend.keyboard           :as keyboard]
             [buckit.frontend.models.account     :as models.account]
+            [buckit.frontend.models.core        :as models]
             [buckit.frontend.models.split       :as models.split]
             [buckit.frontend.models.payee       :as models.payee]
             [buckit.frontend.models.transaction :as models.transaction]
@@ -106,10 +107,14 @@
           transaction (-> result
                           :transaction
                           (assoc :splits splits))
-          query       [:save-transaction transaction]]
-      (dispatch query)
+          query-id    [:save-transaction (cljs.core/random-uuid)]
+          query       {:query-id query-id
+                       :method   :save
+                       :resource models/transactions
+                       :args     [transaction]}]
+      (dispatch [:http-request query])
       (swap! form assoc
-             :pending-query query
+             :pending-query query-id
              :error         nil))))
 
 (defn editor

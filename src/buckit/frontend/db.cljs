@@ -1,6 +1,5 @@
 (ns buckit.frontend.db
-  (:require [buckit.frontend.db.query    :as db.query]
-            [buckit.frontend.models.core :as models]
+  (:require [buckit.frontend.models.core :as models]
             [buckit.frontend.utils       :as utils]))
 
 ;TODO prismatic schema to define db?
@@ -42,24 +41,5 @@
   (update-in db [pending-initializations] disj resource))
 
 (defn update-query
-  [db query m]
-  (assoc-in db [queries query] m))
-
-(defn pending-query
-  [db query]
-  (update-query db query {db.query/status db.query/pending-status}))
-
-(defn successful-query
-  [db query]
-  (update-query db query {db.query/status db.query/complete-status}))
-
-(defn failed-query
-  [db query reason]
-  (update-query db query {db.query/status db.query/error-status
-                          db.query/reason reason}))
-
-(defn complete-query
-  [db query response]
-  (if (:success response)
-    (successful-query db query)
-    (failed-query db query (:error-text response))))
+  [db query f & args]
+  (update-in db [queries query] #(apply f % args)))

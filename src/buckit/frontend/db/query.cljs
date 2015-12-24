@@ -1,24 +1,32 @@
-(ns buckit.frontend.db.query)
+(ns buckit.frontend.db.query
+  (:require [cljs-http.client :as http]))
 
-(def status :status)
-(def reason :reason)
+(defn set-pending
+  [q]
+  (assoc q
+         :status :pending
+         :response nil))
 
-(def complete-status :complete) ; FIXME successful
-(def error-status    :error) ; FIXME failed
-(def pending-status  :pending)
-
-(defn successful?
-  [result]
-  (= complete-status (status result)))
-
-(defn failed?
-  [result]
-  (= error-status (status result)))
+(defn set-complete
+  [q & [response]]
+  (assoc q
+         :status :complete
+         :response response))
 
 (defn pending?
-  [result]
-  (= pending-status (status result)))
+  [q]
+  (= :pending (:status q)))
 
 (defn complete?
-  [result]
-  (or (successful? result) (failed? result)))
+  [q]
+  (= :complete (:status q)))
+
+(defn successful?
+  [q]
+  (and (complete? q)
+       (:success (:response q))))
+
+(defn failed?
+  [q]
+  (and (complete? q)
+       (not (successful? q))))

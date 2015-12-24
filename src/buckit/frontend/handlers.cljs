@@ -44,7 +44,7 @@
                                                          :op "any"
                                                          :val account-id}]}))]
           (dispatch [:transactions-loaded query response])))
-    (buckit.db/pending-query db query)))
+    (buckit.db/update-query db query db.query/set-pending)))
 
 (register-handler
   :transactions-loaded
@@ -52,7 +52,7 @@
   (fn [db [_ query response]]
     (let [transactions (-> response :body :objects)]
       (-> db
-          (buckit.db/successful-query query)
+          (buckit.db/update-query query db.query/set-complete response)
           (buckit.db/inject-resources models/transactions transactions)))))
 
 (register-handler
@@ -60,9 +60,10 @@
   (fn [db [_ transaction :as query]]
     (go (let [response (<! (backend/save models/transactions transaction))]
           (dispatch [:transaction-save-complete query response])))
-    (buckit.db/pending-query db query)))
+    (buckit.db/update-query db query db.query/set-pending)))
 
 (register-handler
   :transaction-save-complete
   (fn [db [_ query response]]
-    (buckit.db/complete-query db query response)))
+    (js/console.log "response" (clj->js response))
+    (buckit.db/update-query db query db.query/set-complete response)))

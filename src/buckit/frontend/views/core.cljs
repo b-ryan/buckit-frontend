@@ -1,5 +1,6 @@
 (ns buckit.frontend.views.core
   (:require [buckit.frontend.db.query           :as db.query]
+            [buckit.frontend.i18n               :as i18n]
             [buckit.frontend.routes             :as routes]
             [buckit.frontend.views.accounts     :as views.accounts]
             [buckit.frontend.views.navbar       :as views.navbar]
@@ -61,13 +62,17 @@
         queries    (subscribe [:queries])]
     (fn
       []
-      [:div
-       [views.navbar/navbar]
-       (if (or (db.query/pending? (get @queries :all-accounts))
-               (db.query/pending? (get @queries :all-payees)))
-         [:div.buckit--loading-overlay [:div.buckit--spinner.center-block]]
-         [:div.container-fluid
-          [:div.row
-           [:div.col-sm-2.buckit--sidebar-wrapper [views.sidebar/sidebar]]
-           [:div.col-sm-10.col-sm-offset-2.buckit--main
-            (main-content @url-path @url-params)]]])])))
+      (let [acc-result  (get @queries :all-accounts)
+            pay-result  (get @queries :all-payees)
+            all-results [acc-result pay-result]]
+        [:div
+         [views.navbar/navbar]
+         (if (every? db.query/complete? all-results)
+           (if (some db.query/failed? all-results)
+             [:div [:p.text-danger i18n/init-error-message]]
+             [:div.container-fluid
+              [:div.row
+               [:div.col-sm-2.buckit--sidebar-wrapper [views.sidebar/sidebar]]
+               [:div.col-sm-10.col-sm-offset-2.buckit--main
+                (main-content @url-path @url-params)]]])
+           [:div.buckit--loading-overlay [:div.buckit--spinner.center-block]])]))))

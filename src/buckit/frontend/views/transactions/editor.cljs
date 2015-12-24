@@ -111,8 +111,7 @@
              :pending-query query
              :error         nil))))
 
-(def generic-save-error
-  "An error occurred while saving.")
+(def generic-save-error "An error occurred while saving.")
 
 (defn editor
   [account-id transaction]

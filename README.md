@@ -1,10 +1,22 @@
 # buckit-frontend
 
-FIXME: Write a one-line description of your library/project.
+A self-hosted budget app.
 
 ## Overview
 
-FIXME: Write a paragraph about the library/project and highlight its goals.
+GOALS:
+
+* Budget functionality on par with YNAB
+* Flexible reporting (no pie charts!)
+* Usable on mobile
+* Translatable (https://github.com/ptaoussanis/tower ?)
+* Accessible (preferably -- determine difficulty?)
+* Auditability -- be able to see who changed what and undo changes
+* Multiple users & budgets
+
+LATER (/ maybe never):
+
+* Investment management (a la KMyMoney)
 
 ## Setup
 

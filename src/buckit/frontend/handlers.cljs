@@ -58,24 +58,6 @@
         db))))
 
 (register-handler
-  :load-account-transactions
-  (fn [db [_ account-id :as query]]
-    (go (let [response (<! (backend/get-many models/transactions
-                                             {:filters [{:name "splits__account_id"
-                                                         :op "any"
-                                                         :val account-id}]}))]
-          (dispatch [:transactions-loaded query response])))
-    (buckit.db/update-query db query db.query/set-pending)))
-
-(register-handler
-  :transactions-loaded
-  (fn [db [_ query response]]
-    (let [transactions (-> response :body :objects)]
-      (-> db
-          (buckit.db/update-query query db.query/set-complete response)
-          (buckit.db/inject-resources models/transactions transactions)))))
-
-(register-handler
   :save-transaction
   (fn [db [_ transaction :as query]]
     (go (let [response (<! (backend/save models/transactions transaction))]

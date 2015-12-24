@@ -89,8 +89,14 @@
         transactions (subscribe [:transactions])]
     (fn
       [{:keys [account-id selected-transaction-id] :as context}]
-      (let [query        [:load-account-transactions account-id]
-            query-result (get @queries query)
+      (let [query-id     [:transactions account-id]
+            query        {:query-id query-id
+                          :method   :get-many
+                          :resource models/transactions
+                          :args     [{:filters [{:name "splits__account_id"
+                                                 :op   "any"
+                                                 :val  account-id}]}]}
+            query-result (get @queries query-id)
             transactions (filter (partial models/account-in-splits? account-id)
                                  (vals @transactions))]
 
@@ -122,7 +128,7 @@
 
           ; otherwise we haven't issued the request to load the transactions
           :else
-          (dispatch query))))))
+          (dispatch [:http-request query]))))))
 
 (defn transactions
   "context map:

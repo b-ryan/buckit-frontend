@@ -10,24 +10,19 @@
             [cljs-http.client                   :as http]
             [re-frame.core                      :refer [dispatch path register-handler]]))
 
+; FIXME "query" is being used for two different concepts. db.query should
+; maybe be called db.query-result or something like that
+
 (register-handler
   :initialize-db
   (fn [& _]
-    (let [db buckit.db/initial-state]
-      (doall
-        (for [resource (buckit.db/pending-initializations db)]
-          (go (let [response (<! (backend/get-many resource))]
-                (dispatch [:resource-loaded resource response])))))
-      db)))
-
-(register-handler
-  :resource-loaded
-  ; TODO handle errors
-  (fn [db [_ resource response]]
-    (let [objs (-> response :body :objects)]
-      (-> db
-          (buckit.db/inject-resources resource objs)
-          (buckit.db/complete-initialization resource)))))
+    (dispatch [:http-request {:query-id :all-accounts
+                              :method   :get-many
+                              :resource models/accounts}])
+    (dispatch [:http-request {:query-id :all-payees
+                              :method   :get-many
+                              :resource models/payees}])
+    buckit.db/initial-state))
 
 (register-handler
   :url-changed
@@ -35,6 +30,32 @@
     (-> db
         (assoc buckit.db/url-path url-path)
         (assoc buckit.db/url-params url-params))))
+
+(register-handler
+  :http-request
+  (fn [db [_ {:keys [query-id method resource args]
+              :or   {args []}
+              :as   query}]]
+    {:pre [(some? query-id)
+           (backend/valid-method? method)
+           (models/valid-resource? resource)
+           (sequential? args)]}
+    (go (let [response (<! (apply backend/request method resource args))]
+          (dispatch [:http-complete (assoc query :response response)])))
+    (buckit.db/update-query db query-id db.query/set-pending)))
+
+(register-handler
+  :http-complete
+  (fn [db [_ {:keys [query-id method resource response]
+              :as   query}]]
+    (let [body (:body response)
+          objs (if (backend/returns-many? method)
+                 (:objects body)
+                 [body])
+          db   (buckit.db/update-query db query-id db.query/set-complete response)]
+      (if (:success response)
+        (buckit.db/inject-resources db resource objs)
+        db))))
 
 (register-handler
   :load-account-transactions

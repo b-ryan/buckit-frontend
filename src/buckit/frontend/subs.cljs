@@ -31,11 +31,6 @@
     (reaction (buckit.db/get-resource @db models/transactions))))
 
 (register-sub
-  :pending-initializations
-  (fn [db _]
-    (reaction (buckit.db/pending-initializations @db))))
-
-(register-sub
   :queries
   (fn [db _]
     (reaction (buckit.db/queries @db))))

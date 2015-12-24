@@ -14,6 +14,10 @@
 (def splits       :splits)
 (def transactions :transactions)
 
+(defn valid-resource?
+  [resource]
+  (contains? #{accounts payees splits transactions} resource))
+
 (defn account-in-splits?
   "Returns true if any of the splits for the given transaction have the account
   ID."

@@ -7,7 +7,6 @@
 (def url-path                :url-path)
 (def url-params              :url-params)
 (def resources               :resources)
-(def pending-initializations :pending-initializations)
 
 ; queries represent GET requests to the backend database. They are a
 ; combination of resource type and optional ID and query parameters.
@@ -20,7 +19,6 @@
    resources               {models/accounts     {}
                             models/payees       {}
                             models/transactions {}}
-   pending-initializations #{models/accounts models/payees}
    queries                 {}})
 
 
@@ -35,10 +33,6 @@
                        resource))
   (update-in db [resources resource]
              merge (utils/index-by-key models/id objs)))
-
-(defn complete-initialization
-  [db resource]
-  (update-in db [pending-initializations] disj resource))
 
 (defn update-query
   [db query f & args]

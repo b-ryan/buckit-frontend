@@ -1,5 +1,6 @@
 (ns buckit.frontend.views.core
-  (:require [buckit.frontend.routes             :as routes]
+  (:require [buckit.frontend.db.query           :as db.query]
+            [buckit.frontend.routes             :as routes]
             [buckit.frontend.views.accounts     :as views.accounts]
             [buckit.frontend.views.navbar       :as views.navbar]
             [buckit.frontend.views.sidebar      :as views.sidebar]
@@ -57,12 +58,13 @@
   []
   (let [url-path   (subscribe [:url-path])
         url-params (subscribe [:url-params])
-        inits      (subscribe [:pending-initializations])]
+        queries    (subscribe [:queries])]
     (fn
       []
       [:div
        [views.navbar/navbar]
-       (if (seq @inits)
+       (if (or (db.query/pending? (get @queries :all-accounts))
+               (db.query/pending? (get @queries :all-payees)))
          [:div.buckit--loading-overlay [:div.buckit--spinner.center-block]]
          [:div.container-fluid
           [:div.row

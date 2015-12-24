@@ -38,7 +38,7 @@
               :as   query}]]
     {:pre [(some? query-id)
            (backend/valid-method? method)
-           (models/valid-resource? resource)
+           (models/valid-model? resource)
            (sequential? args)]}
     (go (let [response (<! (apply backend/request method resource args))]
           (dispatch [:http-complete (assoc query :response response)])))

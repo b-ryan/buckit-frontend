@@ -14,7 +14,7 @@
 (def splits       :splits)
 (def transactions :transactions)
 
-(defn valid-resource?
+(defn valid-model?
   [resource]
   (contains? #{accounts payees splits transactions} resource))
 

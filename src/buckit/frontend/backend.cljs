@@ -32,28 +32,24 @@
             {:with-credentials? false
              :query-params (q-filter->query-param q-filter)}))
 
-(defn query
-  [{:keys [resource id query-params]
-    :or {query-params {}}}]
-  (let [url (str base-url (name resource) (if id (str "/" id) ""))]
-    (http/get url
-              {:with-credentials? false
-               :query-params query-params})))
-
 (defn get-one
   [resource id]
-  (http/get (str base-url (name resource) "/" id) {:with-credentials? false}))
+  (http/get (str base-url (name resource) "/" id)
+            {:with-credentials? false}))
 
 (defn post
   [resource body]
   {:pre [(some? body) (nil? (models/id body))]}
   (http/post (str base-url (name resource))
-             {:with-credentials? false :json-params body}))
+             {:with-credentials? false
+              :json-params body}))
+
 (defn put
   [resource body]
   {:pre [(some? body) (some? (models/id body))]}
   (http/put (str base-url (name resource) "/" (models/id body))
-            {:with-credentials? false :json-params body}))
+            {:with-credentials? false
+             :json-params body}))
 
 (defn save
   [resource body]

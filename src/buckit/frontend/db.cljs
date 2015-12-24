@@ -16,24 +16,24 @@
 (def initial-state
   {url-path                []
    url-params              {}
-   resources               {models/accounts     {}
-                            models/payees       {}
-                            models/transactions {}}
+   resources               {}
    queries                 {}})
 
 
-(defn get-resource
-  [db resource]
-  (get-in db [resources resource]))
+(defn get-resources
+  [db model]
+  {:pre [(models/valid-model? model)]}
+  (get-in db [resources model] {}))
 
 (defn inject-resources
-  [db resource objs]
-  (js/console.log (str (count objs)
-                       " object(s) being added to resource "
-                       resource))
-  (update-in db [resources resource]
+  [db model objs]
+  {:pre [(models/valid-model? model)
+         (sequential? objs)]}
+  (js/console.log (str (count objs) " object(s) being added to resource "
+                       model))
+  (update-in db [resources model]
              merge (utils/index-by-key models/id objs)))
 
 (defn update-query
-  [db query f & args]
-  (update-in db [queries query] #(apply f % args)))
+  [db query-id f & args]
+  (update-in db [queries query-id] #(apply f % args)))

@@ -18,17 +18,17 @@
 (register-sub
   :accounts
   (fn [db _]
-    (reaction (buckit.db/get-resource @db models/accounts))))
+    (reaction (buckit.db/get-resources @db models/accounts))))
 
 (register-sub
   :payees
   (fn [db _]
-    (reaction (buckit.db/get-resource @db models/payees))))
+    (reaction (buckit.db/get-resources @db models/payees))))
 
 (register-sub
   :transactions
   (fn [db _]
-    (reaction (buckit.db/get-resource @db models/transactions))))
+    (reaction (buckit.db/get-resources @db models/transactions))))
 
 (register-sub
   :queries

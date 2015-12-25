@@ -1,0 +1,4 @@
+dependencies:
+  pre:
+    - npm install
+    - bower install

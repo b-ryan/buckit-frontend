@@ -28,6 +28,9 @@
 
   :source-paths ["src"]
 
+  :aliases {"test"     ["doo" "slimer" "test" "once"]
+            "autotest" ["doo" "slimer" "test" "auto"]}
+
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
   :cljsbuild {:builds

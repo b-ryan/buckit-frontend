@@ -42,7 +42,7 @@
            (sequential? args)]}
     (go (let [response (<! (apply backend/request method resource args))]
           (dispatch [:http-complete (assoc query :response response)])))
-    (buckit.db/update-query db query-id db.query/set-pending)))
+    (buckit.db/update-query db query-id #(db.query/create-pending query-id))))
 
 (register-handler
   :http-complete

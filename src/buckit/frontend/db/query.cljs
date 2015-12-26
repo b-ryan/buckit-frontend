@@ -1,16 +1,16 @@
 (ns buckit.frontend.db.query
   (:require [cljs-http.client :as http]))
 
-(defn set-pending
-  [q]
-  (assoc q
-         :status :pending
-         :response nil))
+(defn create-pending
+  [query-id]
+  {:query-id query-id
+   :status   :pending
+   :response nil})
 
 (defn set-complete
-  [q & [response]]
+  [q response]
   (assoc q
-         :status :complete
+         :status   :complete
          :response response))
 
 (defn pending?

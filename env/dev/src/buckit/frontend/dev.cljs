@@ -1,6 +1,6 @@
 (ns ^:figwheel-no-load buckit.frontend.dev
   (:require [buckit.frontend.core :as core]
-            [secretary.core :as secretary :refer-macros [defroute]]))
+            [secretary.core       :as secretary :refer-macros [defroute]]))
 
 (enable-console-print!)
 

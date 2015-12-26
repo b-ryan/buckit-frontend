@@ -36,41 +36,41 @@
   :cljsbuild {:builds
               [; "dev" build outputs JS for development, complete with
                ; auto-reloading using figwheel.
-               {:id "dev"
+               {:id           "dev"
                 :source-paths ["src" "env/dev/src"]
 
-                :figwheel { :on-jsload "buckit.frontend.dev/on-js-reload" }
+                :figwheel     {:on-jsload "buckit.frontend.dev/on-js-reload" }
 
-                :compiler {:main buckit.frontend.core
-                           :asset-path "js/compiled/out"
-                           :output-to "resources/public/js/compiled/buckit_frontend.js"
-                           :output-dir "resources/public/js/compiled/out"
-                           :source-map-timestamp true }}
+                :compiler     {:main                 buckit.frontend.core
+                               :asset-path           "js/compiled/out"
+                               :output-to            "resources/public/js/compiled/buckit_frontend.js"
+                               :output-dir           "resources/public/js/compiled/out"
+                               :source-map-timestamp true }}
 
                ; "min" build produces minified JS using "advanced" optimizations.
                ; It is not currently ready for production.
-               {:id "min"
+               {:id           "min"
                 :source-paths ["src"]
-                :compiler {:output-to "resources/public/js/compiled/buckit_frontend.js"
-                           :main buckit.frontend.core
-                           :optimizations :advanced
-                           :pretty-print false}}
+                :compiler     {:output-to     "resources/public/js/compiled/buckit_frontend.js"
+                               :main          buckit.frontend.core
+                               :optimizations :advanced
+                               :pretty-print  false}}
 
-               {:id "test"
+               {:id           "test"
                 :source-paths ["src" "test"]
-                :compiler {:output-to "resources/public/js/testable.js"
-                           :main 'buckit.frontend.runner
-                           :optimizations :none}}]}
+                :compiler     {:output-to     "resources/public/js/testable.js"
+                               :main          'buckit.frontend.runner
+                               :optimizations :none}}]}
 
   :figwheel {
              ;; :http-server-root "public" ;; default and assumes "resources" 
              ;; :server-port 3449 ;; default
              ;; :server-ip "127.0.0.1" 
 
-             :css-dirs ["resources/public/css"] ;; watch and update CSS
+             :css-dirs         ["resources/public/css"] ;; watch and update CSS
 
              ;; Start an nREPL server into the running figwheel process
-             :nrepl-port 3450
+             :nrepl-port       3450
              :nrepl-middleware ["cider.nrepl/cider-middleware"
                                 "cemerick.piggieback/wrap-cljs-repl"]
 

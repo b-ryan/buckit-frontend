@@ -3,7 +3,7 @@
             [buckit.frontend.routes     :as routes]
             [buckit.frontend.subs] ; needs to be required for side effects
             [buckit.frontend.views.core :as views.core]
-            [reagent.core               :as reagant]
+            [reagent.core               :as reagent]
             [re-frame.core              :refer [dispatch dispatch-sync]]))
 
 (defn init!
@@ -13,5 +13,5 @@
 
 (defn main
   []
-  (reagant/render-component [views.core/main]
-                            (.getElementById js/document "buckit")))
+  (reagent/render [views.core/main]
+                  (.getElementById js/document "buckit")))

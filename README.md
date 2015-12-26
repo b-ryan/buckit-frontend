@@ -2,6 +2,8 @@
 
 A self-hosted budget app.
 
+![circleci status](https://circleci.com/gh/b-ryan/buckit-frontend.png?style=shield&circle-token=900699d95e7b0250798d7b9756b9747f4fd0789b)
+
 ## Overview
 
 GOALS:

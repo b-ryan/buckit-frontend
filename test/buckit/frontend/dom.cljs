@@ -23,3 +23,17 @@
                 (fn [[k]]
                   (get subscriptions k))]
     (f)))
+
+(defn mounted-with-subs
+  [component subscriptions f]
+  (with-subscriptions
+    subscriptions
+    #(with-mounted-component component f)))
+
+(defn found-in
+  [re div]
+  (let [res (.-innerHTML div)]
+    (if (re-find re res)
+      true
+      (do (println "Not found: " res)
+          false))))

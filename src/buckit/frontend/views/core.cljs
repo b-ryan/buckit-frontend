@@ -67,12 +67,12 @@
             all-results [acc-result pay-result]]
         [:div
          [views.navbar/navbar]
-         (if (every? db.query/complete? all-results)
-           (if (some db.query/failed? all-results)
-             [:div [:p.text-danger i18n/init-error-message]]
+         (if (some db.query/failed? all-results)
+           [:div [:p.text-danger i18n/init-error-message]]
+           (if (every? db.query/complete? all-results)
              [:div.container-fluid
               [:div.row
                [:div.col-sm-2.buckit--sidebar-wrapper [views.sidebar/sidebar]]
                [:div.col-sm-10.col-sm-offset-2.buckit--main
-                (main-content @url-path @url-params)]]])
-           [:div.buckit--loading-overlay [:div.buckit--spinner.center-block]])]))))
+                (main-content @url-path @url-params)]]]
+             [:div.buckit--loading-overlay [:div.buckit--spinner.center-block]]))]))))

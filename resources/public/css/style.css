@@ -18,11 +18,41 @@ body {
 }
 
 /*
+ * Navbar
+ */
+@media (max-width: 768px) {
+    .buckit--navbar .navbar-nav {
+        /* Bootstrap gives a -15 margin on left/right for the navbar on small
+         * screens. Override so the nav isn't way up against the edge
+         */
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .buckit--navbar .navbar-nav > li {
+        /* By default, bootstrap tries to collapse the navbar on small screens and
+         * show one item per line. This overrides to show each navbar item on the
+         * same line.
+         */
+        float: left;
+    }
+}
+
+.buckit--navbar .navbar-brand {
+    display: none; /* do not show on small devices */
+}
+
+@media (min-width: 768px) {
+    .buckit--navbar .navbar-brand {
+        display: block;
+    }
+}
+
+/*
  * Sidebar
  */
 .buckit--sidebar-wrapper {
-    /* by default, do not show the sidebar. It is only shown on larger screens */
-    display: none;
+    display: none; /* do not show on small devices */
 }
 
 @media (min-width: 768px) {

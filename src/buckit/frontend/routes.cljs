@@ -13,6 +13,7 @@
 (def account-transaction-create  :account-transaction-create)
 (def account-transaction-edit    :account-transaction-edit)
 (def budget                      :budget)
+(def transactions                :transactions)
 
 (defn- ->int
   [x]
@@ -64,6 +65,11 @@
   "/budget"
   []
   (dispatch [:url-changed budget]))
+
+(defroute transactions-url
+  "/transactions"
+  []
+  (dispatch [:url-changed transactions]))
 
 (defroute
   "*"

@@ -2,7 +2,14 @@
   (:require [buckit.frontend.routes :as routes]
             [re-frame.core          :refer [subscribe]]))
 
-(def ^:private sections [{:name "Accounts"
+(def ^:private sections [{:name "Transactions"
+                          :href (routes/transactions-url)
+                          :matches #{routes/account-transactions
+                                     routes/account-transaction-details
+                                     routes/account-transaction-create
+                                     routes/account-transaction-edit
+                                     routes/transactions}}
+                         {:name "Accounts"
                           :href (routes/accounts-url)
                           :matches #{routes/accounts routes/account-details}}
                          {:name "Budget"
@@ -14,26 +21,16 @@
   [:ul.nav.navbar-nav
    (doall (for [sec sections]
             ^{:key (:name sec)}
-            [:li {:class (if (contains? (:matches sec) url-path)
-                           "active"
-                           nil)}
+            [:li {:class (when (contains? (:matches sec) url-path)
+                           "active")}
              [:a {:href (:href sec)} (:name sec)]]))])
 
-; FIXME collapse button doesn't seem to work
 (defn navbar
   []
   (let [url-path (subscribe [:url-path])]
     (fn
       []
-      [:nav.navbar.navbar-inverse.navbar-fixed-top
-       [:div.navbar-header
-        [:button.navbar-toggle.collapsed {:type "button"
-                                          :data-toggle "collapse"
-                                          :data-target "buckit-navbar-collapse"}
-         [:span.sr-only "Toggle navigation"]
-         [:span.icon-bar]
-         [:span.icon-bar]
-         [:span.icon-bar]]
-        [:span.navbar-brand "Buckit"]]
-       [:div.collapse.navbar-collapse.navbar-right {:id "buckit-navbar-collapse"}
+      [:nav.buckit--navbar.navbar.navbar-inverse.navbar-fixed-top
+       [:div.navbar-header [:span.navbar-brand "Buckit"]]
+       [:div.navbar-right {:id "buckit-navbar-collapse"}
         [sections-ul @url-path]]])))

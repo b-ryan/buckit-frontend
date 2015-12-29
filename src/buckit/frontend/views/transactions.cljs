@@ -43,11 +43,11 @@
 (def ledger-header
   [:div.container-fluid
    [:div.row.buckit--ledger-header
-    [:span.col-sm-2 "Date"]
-    [:span.col-sm-2 "Payee"]
-    [:span.col-sm-3 "Category"]
-    [:span.col-sm-3 "Memo"]
-    [:span.col-sm-2 "Amount"]]])
+    [:span.col-sm-2.col-xs-4 "Date"]
+    [:span.col-sm-2.hidden-xs "Payee"]
+    [:span.col-sm-3.col-xs-4 "Category"]
+    [:span.col-sm-3.hidden-xs "Memo"]
+    [:span.col-sm-2.col-xs-4 "Amount"]]])
 
 (defn- ledger-row
   [account-id transaction & {:keys [is-selected?]}]
@@ -66,14 +66,14 @@
                           routes/account-transaction-details-url)
                           {:account-id account-id
                            :transaction-id (models.transaction/id transaction)}))}
-          [:span.col-sm-2 (:date transaction)]
-          [:span.col-sm-2 (->> transaction
+          [:span.col-sm-2.col-xs-4 (:date transaction)]
+          [:span.col-sm-2.hidden-xs (->> transaction
                                models.transaction/payee-id
                                (get @payees)
                                models.payee/name)]
-          [:span.col-sm-3 (account-to-show @accounts other-splits)]
-          [:span.col-sm-3]
-          [:span.col-sm-2 (amount-to-show main-split)]]))))
+          [:span.col-sm-3.col-xs-4 (account-to-show @accounts other-splits)]
+          [:span.col-sm-3.hidden-xs]
+          [:span.col-sm-2.col-xs-4 (amount-to-show main-split)]]))))
 
 (defn- toolbar
   [{:keys [account-id]}]

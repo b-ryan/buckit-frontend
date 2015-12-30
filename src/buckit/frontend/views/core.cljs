@@ -24,30 +24,6 @@
   [& args]
   [views.accounts/account-details])
 
-(defmethod main-content routes/account-transactions
-  [_ url-params]
-  [views.transactions/transactions
-   {:account-id              (:account-id url-params)}])
-
-(defmethod main-content routes/account-transaction-create
-  [_ url-params]
-  [views.transactions/transactions
-   {:account-id              (:account-id url-params)
-    :create-transaction?     true}])
-
-(defmethod main-content routes/account-transaction-details
-  [_ url-params]
-  [views.transactions/transactions
-   {:account-id              (:account-id url-params)
-    :selected-transaction-id (:transaction-id url-params)}])
-
-(defmethod main-content routes/account-transaction-edit
-  [_ url-params]
-  [views.transactions/transactions
-   {:account-id              (:account-id url-params)
-    :selected-transaction-id (:transaction-id url-params)
-    :edit-selected?          true}])
-
 (defmethod main-content routes/transactions
   [_ url-params]
   [views.transactions/transactions

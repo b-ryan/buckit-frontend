@@ -4,11 +4,7 @@
 
 (def ^:private sections [{:name "Transactions"
                           :href (routes/transactions-url)
-                          :matches #{routes/account-transactions
-                                     routes/account-transaction-details
-                                     routes/account-transaction-create
-                                     routes/account-transaction-edit
-                                     routes/transactions}}
+                          :matches #{routes/transactions}}
                          {:name "Accounts"
                           :href (routes/accounts-url)
                           :matches #{routes/accounts routes/account-details}}

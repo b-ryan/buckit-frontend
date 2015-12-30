@@ -8,10 +8,7 @@
   (contains? models.account/owned-account-types (:type account)))
 
 (def ^:private matching-routes
-  #{routes/account-transactions
-    routes/account-transaction-create
-    routes/account-transaction-details
-    routes/account-transaction-edit})
+  #{routes/transactions})
 
 (defn sidebar
   []
@@ -24,9 +21,9 @@
        (doall
          (for [[account-id account] @accounts
                :when (show-account? account)
-               :let [href    (routes/account-transactions-url {:account-id account-id})
+               :let [href    (routes/transactions-url {:query-params {:account_id account-id}})
                      active? (and (contains? matching-routes @url-path)
-                                  (= account-id (:account-id @url-params)))]]
+                                  (= account-id (:account_id @url-params)))]]
            ^{:key account-id}
            [:li {:class (when active? "active")}
             [:a {:href href} (:name account)

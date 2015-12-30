@@ -8,10 +8,6 @@
 (def home                        :home)
 (def accounts                    :accounts)
 (def account-details             :account-details)
-(def account-transactions        :account-transactions)
-(def account-transaction-details :account-transaction-details)
-(def account-transaction-create  :account-transaction-create)
-(def account-transaction-edit    :account-transaction-edit)
 (def budget                      :budget)
 (def transactions                :transactions)
 
@@ -37,36 +33,10 @@
   (dispatch [:url-changed accounts]))
 
 (defroute account-details-url
-  "/accounts/:account-id"
+  "/accounts/:account_id"
   [account-id]
   (dispatch [:url-changed account-details
-             {:account-id (->int account-id)}]))
-
-(defroute account-transactions-url
-  "/accounts/:account-id/transactions"
-  [account-id]
-  (dispatch [:url-changed account-transactions
-             {:account-id (->int account-id)}]))
-
-(defroute account-transaction-create-url
-  "/accounts/:account-id/transactions/create"
-  [account-id]
-  (dispatch [:url-changed account-transaction-create
-             {:account-id (->int account-id)}]))
-
-(defroute account-transaction-details-url
-  "/accounts/:account-id/transactions/:transaction-id"
-  [account-id transaction-id]
-  (dispatch [:url-changed account-transaction-details
-             {:account-id (->int account-id)
-              :transaction-id (->int transaction-id)}]))
-
-(defroute account-transaction-edit-url
-  "/accounts/:account-id/transactions/:transaction-id/edit"
-  [account-id transaction-id]
-  (dispatch [:url-changed account-transaction-edit
-             {:account-id (->int account-id)
-              :transaction-id (->int transaction-id)}]))
+             {:account_id (->int account-id)}]))
 
 (defroute budget-url
   "/budget"

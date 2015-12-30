@@ -7,8 +7,8 @@
 (deftest load-in-progress
   (dom/mounted-with-subs
     [views.core/main]
-    {:url-path   (atom routes/account-transactions)
-     :url-params (atom {:account-id 1})
+    {:url-path   (atom routes/transactions)
+     :url-params (atom {:account_id 1})
      :queries    (atom {})}
     (fn [component div]
       (is (> (.-length (.getElementsByClassName div "buckit--loading-overlay"))
@@ -17,8 +17,8 @@
 (deftest load-failure
   (dom/mounted-with-subs
     [views.core/main]
-    {:url-path   (atom routes/account-transactions)
-     :url-params (atom {:account-id 1})
+    {:url-path   (atom routes/transactions)
+     :url-params (atom {:account_id 1})
      :queries    (atom {:all-payees {:query-id :all-payees
                                      :status   :complete
                                      :response {:success false}}})}

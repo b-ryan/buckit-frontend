@@ -83,22 +83,18 @@
 
 (defmethod ^:private transactions-query true
   [account-id]
-  (let [query-id     [:load-transactions account-id]
-        query        {:query-id query-id
-                      :method   :get-many
-                      :resource models/transactions
-                      :args     [{:filters [{:name "splits__account_id"
-                                             :op   "any"
-                                             :val  account-id}]}]}]
-    [query-id query]))
+  {:query-id [:load-transactions account-id]
+   :method   :get-many
+   :resource models/transactions
+   :args     [{:filters [{:name "splits__account_id"
+                          :op   "any"
+                          :val  account-id}]}]})
 
 (defmethod ^:private transactions-query false
   [_]
-  (let [query-id     [:load-transactions]
-        query        {:query-id query-id
-                      :method   :get-many
-                      :resource models/transactions}]
-    [query-id query]))
+  {:query-id [:load-transactions]
+   :method   :get-many
+   :resource models/transactions})
 
 (defn- nil-or-integer?
   [x]
@@ -117,8 +113,8 @@
       [{:keys [account-id selected-transaction-id] :as context}]
       {:pre [(integer? account-id)
              (nil-or-integer? selected-transaction-id)]}
-      (let [[query-id query] (transactions-query account-id)
-            query-result     (get @queries query-id)]
+      (let [query            (transactions-query account-id)
+            query-result     (get @queries (:query-id query))]
 
         (cond
 

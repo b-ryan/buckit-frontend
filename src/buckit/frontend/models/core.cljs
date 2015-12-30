@@ -26,3 +26,8 @@
   (let [splits      (models.transaction/splits transaction)
         account-ids (map models.split/account-id splits)]
     (some #{account-id} account-ids)))
+
+(defn account-transactions
+  [account-id transactions]
+  (filter (partial account-in-splits? account-id)
+          transactions))

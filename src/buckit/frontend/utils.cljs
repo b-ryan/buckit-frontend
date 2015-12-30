@@ -17,3 +17,7 @@
   [x]
   (js/console.log "spy results:" (clj->js x))
   x)
+
+(defn- nil-or-integer?
+  [x]
+  (or (nil? x) (integer? x)))

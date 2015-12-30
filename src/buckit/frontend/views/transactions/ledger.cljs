@@ -13,6 +13,39 @@
             [buckit.frontend.views.transactions.events  :as events]
             [re-frame.core                              :refer [dispatch subscribe]]))
 
+
+
+(defmulti ^:private transactions-query
+  (fn [account-id] (boolean account-id)))
+
+(defmethod ^:private transactions-query true
+  [account-id]
+  {:query-id [:load-transactions account-id]
+   :method   :get-many
+   :resource models/transactions
+   :args     [{:filters [{:name "splits__account_id"
+                          :op   "any"
+                          :val  account-id}]}]})
+
+(defmethod ^:private transactions-query false
+  [_]
+  {:query-id [:load-transactions]
+   :method   :get-many
+   :resource models/transactions})
+
+
+
+(def ledger-header
+  [:div.container-fluid
+   [:div.row.buckit--ledger-header
+    [:span.col-sm-2.col-xs-4 "Date"]
+    [:span.col-sm-2.hidden-xs "Payee"]
+    [:span.col-sm-3.col-xs-4 "Category"]
+    [:span.col-sm-3.hidden-xs "Memo"]
+    [:span.col-sm-2.col-xs-4 "Amount"]]])
+
+
+
 (defn- account-to-show
   [accounts other-splits]
   (if (> (count other-splits) 1)
@@ -42,16 +75,7 @@
      ; FIXME other currencies?
      (str " $" (js/Math.abs amount))]))
 
-(def ledger-header
-  [:div.container-fluid
-   [:div.row.buckit--ledger-header
-    [:span.col-sm-2.col-xs-4 "Date"]
-    [:span.col-sm-2.hidden-xs "Payee"]
-    [:span.col-sm-3.col-xs-4 "Category"]
-    [:span.col-sm-3.hidden-xs "Memo"]
-    [:span.col-sm-2.col-xs-4 "Amount"]]])
-
-(defn- ledger-row
+(defn- read-only-row
   [context transaction]
   (let [accounts (subscribe [:accounts])
         payees   (subscribe [:payees])]
@@ -72,32 +96,17 @@
           [:span.col-sm-3.hidden-xs]
           [:span.col-sm-2.col-xs-4 (amount-to-show main-split)]]))))
 
-(defmulti ^:private transactions-query
-  (fn [account-id] (boolean account-id)))
+(defn- ledger-row
+  [context transaction]
+  (let [transaction-id (models.transaction/id transaction)
+        is-selected?   (ctx/is-selected? context transaction-id)]
+    [:div.container-fluid.buckit--ledger-row
+     {:class (when is-selected? "active")}
+     (if (and is-selected? (:edit? context))
+       [editor/editor context transaction]
+       [read-only-row context transaction])]))
 
-(defmethod ^:private transactions-query true
-  [account-id]
-  {:query-id [:load-transactions account-id]
-   :method   :get-many
-   :resource models/transactions
-   :args     [{:filters [{:name "splits__account_id"
-                          :op   "any"
-                          :val  account-id}]}]})
-
-(defmethod ^:private transactions-query false
-  [_]
-  {:query-id [:load-transactions]
-   :method   :get-many
-   :resource models/transactions})
-
-(defn- nil-or-integer?
-  [x]
-  (or (nil? x) (integer? x)))
-
-(defn- filter-transactions
-  [account-id transactions]
-  (filter (partial models/account-in-splits? account-id)
-          (vals @transactions)))
+; (defn- )
 
 (defn ledger
   [context]
@@ -105,11 +114,28 @@
         transactions (subscribe [:transactions])]
     (fn
       [{:keys [account-id selected-transaction-id] :as context}]
-      {:pre [(nil-or-integer? account-id)
-             (nil-or-integer? selected-transaction-id)]}
+      {:pre [(utils/nil-or-integer? account-id)
+             (utils/nil-or-integer? selected-transaction-id)]}
       (let [query            (transactions-query account-id)
-            query-result     (get @queries (:query-id query))]
+            query-result     (get @queries (:query-id query))
+            transactions     (models/account-transactions account-id (vals @transactions))]
         (cond
+          ; -----------------------------------------------------------------
+          ; NO QUERY
+          ; -----------------------------------------------------------------
+          (nil? query-result)
+          (do (js/setTimeout #(dispatch [:http-request query]))
+              [:div.buckit--spinner])
+          ; -----------------------------------------------------------------
+          ; PENDING QUERY
+          ; -----------------------------------------------------------------
+          (db.query/pending? query-result)
+          [:div.buckit--spinner]
+          ; -----------------------------------------------------------------
+          ; FAILED QUERY
+          ; -----------------------------------------------------------------
+          (db.query/failed? query-result)
+          [:div [:p.text-danger i18n/transactions-not-loaded-error]]
           ; -----------------------------------------------------------------
           ; SUCCESSFUL QUERY
           ; -----------------------------------------------------------------
@@ -117,31 +143,10 @@
           [:div.buckit--ledger
            ledger-header
            (doall
-             (for [transaction (filter-transactions account-id transactions)
-                   :let [transaction-id (models.transaction/id transaction)
-                         is-selected?   (ctx/is-selected? context transaction-id)]]
-               ^{:key transaction-id}
-               [:div.container-fluid.buckit--ledger-row
-                {:class (when is-selected? "active")}
-                (if (and is-selected? (:edit? context))
-                  [editor/editor context transaction]
-                  [ledger-row context transaction])]))
+             (for [transaction transactions]
+               (with-meta
+                 (ledger-row context transaction)
+                 {:key (models.transaction/id transaction)})))
            (when (and (not selected-transaction-id) (:edit? context))
              [:div.container-fluid.buckit--ledger-row.active
-              [editor/editor context (models.transaction/create account-id)]])]
-          ; -----------------------------------------------------------------
-          ; FAILED QUERY
-          ; -----------------------------------------------------------------
-          (db.query/failed? query-result)
-          [:div [:p.text-danger i18n/transactions-not-loaded-error]]
-          ; -----------------------------------------------------------------
-          ; PENDING QUERY
-          ; -----------------------------------------------------------------
-          (db.query/pending? query-result)
-          [:div.buckit--spinner]
-          ; -----------------------------------------------------------------
-          ; NO QUERY
-          ; -----------------------------------------------------------------
-          :else
-          (do (js/setTimeout #(dispatch [:http-request query]))
-              [:div.buckit--spinner]))))))
+              [editor/editor context (models.transaction/create account-id)]])])))))

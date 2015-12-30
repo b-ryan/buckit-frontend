@@ -15,11 +15,16 @@
 
 
 
-(defmulti ^:private transactions-query
-  (fn [account-id] (boolean account-id)))
+(defmulti ^:private transactions-query ctx/mode)
 
-(defmethod ^:private transactions-query true
-  [account-id]
+(defmethod ^:private transactions-query :no-account
+  [_]
+  {:query-id [:load-transactions]
+   :method   :get-many
+   :resource models/transactions})
+
+(defmethod ^:private transactions-query :single-account
+  [{:keys [account-id]}]
   {:query-id [:load-transactions account-id]
    :method   :get-many
    :resource models/transactions
@@ -27,12 +32,16 @@
                           :op   "any"
                           :val  account-id}]}]})
 
-(defmethod ^:private transactions-query false
-  [_]
-  {:query-id [:load-transactions]
-   :method   :get-many
-   :resource models/transactions})
 
+(defmulti ^:private filter-transactions ctx/mode)
+
+(defmethod ^:private filter-transactions :no-account
+  [_ transactions]
+  transactions)
+
+(defmethod ^:private filter-transactions :single-account
+  [{:keys [account-id]} transactions]
+  (models/account-transactions account-id transactions))
 
 
 (def ledger-header
@@ -87,14 +96,14 @@
         (assert main-split)
         [:div.row
          {:on-click (events/transaction-clicked-fn context transaction)}
-          [:span.col-sm-2.col-xs-4 (:date transaction)]
-          [:span.col-sm-2.hidden-xs (->> transaction
-                               models.transaction/payee-id
-                               (get @payees)
-                               models.payee/name)]
-          [:span.col-sm-3.col-xs-4 (account-to-show @accounts other-splits)]
-          [:span.col-sm-3.hidden-xs]
-          [:span.col-sm-2.col-xs-4 (amount-to-show main-split)]]))))
+         [:span.col-sm-2.col-xs-4 (:date transaction)]
+         [:span.col-sm-2.hidden-xs (->> transaction
+                                        models.transaction/payee-id
+                                        (get @payees)
+                                        models.payee/name)]
+         [:span.col-sm-3.col-xs-4 (account-to-show @accounts other-splits)]
+         [:span.col-sm-3.hidden-xs]
+         [:span.col-sm-2.col-xs-4 (amount-to-show main-split)]]))))
 
 (defn- ledger-row
   [context transaction]
@@ -116,9 +125,9 @@
       [{:keys [account-id selected-transaction-id] :as context}]
       {:pre [(utils/nil-or-integer? account-id)
              (utils/nil-or-integer? selected-transaction-id)]}
-      (let [query            (transactions-query account-id)
+      (let [query            (transactions-query context)
             query-result     (get @queries (:query-id query))
-            transactions     (models/account-transactions account-id (vals @transactions))]
+            transactions     (filter-transactions context (vals @transactions))]
         (cond
           ; -----------------------------------------------------------------
           ; NO QUERY

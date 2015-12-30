@@ -12,7 +12,11 @@
 
 (defn mode
   [context]
-  #{:no-account :single-account :multi-account})
+  (let [account-id (:account-id context)]
+    (cond
+      ; FIXME allow for multiple accounts?
+      (nil? account-id) :no-account
+      :else             :single-account)))
 
 (defn is-selected?
   [context transaction-id]

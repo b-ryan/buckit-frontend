@@ -1,17 +1,9 @@
 (ns buckit.frontend.views.transactions.events
-  (:require [buckit.frontend.db.query           :as db.query]
-            [buckit.frontend.i18n               :as i18n]
-            [buckit.frontend.ui                 :as ui]
-            [buckit.frontend.keyboard           :as keyboard]
-            [buckit.frontend.models.account     :as models.account]
-            [buckit.frontend.models.core        :as models]
-            [buckit.frontend.models.split       :as models.split]
-            [buckit.frontend.models.payee       :as models.payee]
+  (:require [buckit.frontend.models.core        :as models]
             [buckit.frontend.models.transaction :as models.transaction]
             [buckit.frontend.routes             :as routes]
             [buckit.frontend.utils              :as utils]
-            [re-frame.core                      :refer [dispatch subscribe]]
-            [reagent.core                       :as reagent]))
+            [re-frame.core                      :refer [dispatch]]))
 
 ;TODO maybe these should be handlers?
 

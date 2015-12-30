@@ -118,6 +118,11 @@
              :error         nil))))
 
 (defn editor
+  "An editor for modifying and creating transactions. NOTE: You should not
+  set this editor up in such a way that it will persist as the transaction or
+  options change. As an example, it would not be good to have a static editor
+  that is always open. You should instead make destroy and create a new editor
+  as you need to edit different transactions."
   [account-id transaction]
   (let [accounts       (subscribe [:accounts])
         payees         (subscribe [:payees])

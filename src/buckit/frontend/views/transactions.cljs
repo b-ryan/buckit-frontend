@@ -83,22 +83,47 @@
                                 {:account-id account-id}))}
     "+ Transaction"]])
 
+(defmulti ^:private transactions-query
+  (fn [account-id] (boolean account-id)))
+
+(defmethod ^:private transactions-query true
+  [account-id]
+  (let [query-id     [:load-transactions account-id]
+        query        {:query-id query-id
+                      :method   :get-many
+                      :resource models/transactions
+                      :args     [{:filters [{:name "splits__account_id"
+                                             :op   "any"
+                                             :val  account-id}]}]}]
+    [query-id query]))
+
+(defmethod ^:private transactions-query false
+  [_]
+  (let [query-id     [:load-transactions]
+        query        {:query-id query-id
+                      :method   :get-many
+                      :resource models/transactions}]
+    [query-id query]))
+
+(defn- nil-or-integer?
+  [x]
+  (or (nil? x) (integer? x)))
+
+(defn- filter-transactions
+  [account-id transactions]
+  (filter (partial models/account-in-splits? account-id)
+          (vals @transactions)))
+
 (defn- ledger
   [context]
   (let [queries      (subscribe [:queries])
         transactions (subscribe [:transactions])]
     (fn
       [{:keys [account-id selected-transaction-id] :as context}]
-      (let [query-id     [:load-transactions account-id]
-            query        {:query-id query-id
-                          :method   :get-many
-                          :resource models/transactions
-                          :args     [{:filters [{:name "splits__account_id"
-                                                 :op   "any"
-                                                 :val  account-id}]}]}
-            query-result (get @queries query-id)
-            transactions (filter (partial models/account-in-splits? account-id)
-                                 (vals @transactions))]
+      {:pre [(integer? account-id)
+             (nil-or-integer? selected-transaction-id)]}
+      (let [[query-id query] (transactions-query account-id)
+            query-result     (get @queries query-id)]
 
         (cond
 
@@ -106,7 +131,7 @@
           [:div.buckit--ledger
            ledger-header
            (doall
-             (for [transaction transactions
+             (for [transaction (filter-transactions account-id transactions)
                    :let [transaction-id (models.transaction/id transaction)
                          is-selected?   (= selected-transaction-id transaction-id)]]
                ^{:key transaction-id}
@@ -115,10 +140,10 @@
                 (if (and is-selected? (:edit-selected? context))
                   [editor/editor account-id transaction]
                   [ledger-row account-id transaction
-                   :is-selected? (= selected-transaction-id transaction-id)])]))
+                   :is-selected? is-selected?])]))
            (when (:create-transaction? context)
              [:div.container-fluid.buckit--ledger-row.active
-              [editor/editor account-id (-> (models.transaction/create account-id))]])]
+              [editor/editor account-id (models.transaction/create account-id)]])]
 
           (db.query/failed? query-result)
           [:div [:p.text-danger i18n/transactions-not-loaded-error]]
@@ -128,28 +153,26 @@
 
           ; otherwise we haven't issued the request to load the transactions
           :else
-          (dispatch [:http-request query]))))))
+          (do (js/setTimeout #(dispatch [:http-request query]))
+              [:div.buckit--spinner]))))))
 
 (defn transactions
   "context map:
 
   :account-id              ID of the account currently being worked on
-  (required)
+                           (required)
 
   :create-transaction?     Indicates whether the editor to create a new
-  transaction should be shown.
-  (optional -- default: false)
+                           transaction should be shown.
+                           (optional -- default: false)
 
   :selected-transaction-id ID of the transaction highlighted or being edited
-  (optional -- default: nil)
+                           (optional -- default: nil)
 
   :edit-selected?          Indicaes whether :selected-transaction-id is being
-  edited
-  (optional -- default: false)
-  "
-  [{:keys [account-id selected-transaction-id] :as context}]
-  {:pre [(integer? account-id)
-         (or (nil? selected-transaction-id) (integer? selected-transaction-id))]}
+                           edited
+                           (optional -- default: false)"
+  [context]
   [:div.container-fluid.buckit--transactions-view
    [:div.row [toolbar context]]
    [:div.row [ledger context]]])

@@ -20,4 +20,4 @@
    date     (time.fmt/unparse (time.fmt/formatter "yyyy-MM-dd")
                               (time.coerce/to-date-time (time.core/today)))
    payee-id nil
-   splits   [(utils/spy (models.split/create account-id)) (models.split/create)]})
+   splits   [(models.split/create account-id) (models.split/create)]})

@@ -1,17 +1,18 @@
 (ns buckit.frontend.views.transactions.editor
-  (:require [buckit.frontend.db.query           :as db.query]
-            [buckit.frontend.i18n               :as i18n]
-            [buckit.frontend.ui                 :as ui]
-            [buckit.frontend.keyboard           :as keyboard]
-            [buckit.frontend.models.account     :as models.account]
-            [buckit.frontend.models.core        :as models]
-            [buckit.frontend.models.split       :as models.split]
-            [buckit.frontend.models.payee       :as models.payee]
-            [buckit.frontend.models.transaction :as models.transaction]
-            [buckit.frontend.routes             :as routes]
-            [buckit.frontend.utils              :as utils]
-            [re-frame.core                      :refer [dispatch subscribe]]
-            [reagent.core                       :as reagent]))
+  (:require [buckit.frontend.db.query                  :as db.query]
+            [buckit.frontend.i18n                      :as i18n]
+            [buckit.frontend.ui                        :as ui]
+            [buckit.frontend.keyboard                  :as keyboard]
+            [buckit.frontend.models.account            :as models.account]
+            [buckit.frontend.models.core               :as models]
+            [buckit.frontend.models.split              :as models.split]
+            [buckit.frontend.models.payee              :as models.payee]
+            [buckit.frontend.models.transaction        :as models.transaction]
+            [buckit.frontend.routes                    :as routes]
+            [buckit.frontend.utils                     :as utils]
+            [buckit.frontend.views.transactions.events :as events]
+            [re-frame.core                             :refer [dispatch subscribe]]
+            [reagent.core                              :as reagent]))
 
 (defn- editor-div
   [width content]
@@ -86,44 +87,14 @@
       (amount-editor form split-path)
       {:key :amount})))
 
-(defn- editor-cancel-fn
-  [account-id transaction]
-  (fn [e]
-    (.preventDefault e)
-    (routes/go-to
-      (if-let [transaction-id (models.transaction/id transaction)]
-        (routes/account-transaction-details-url
-          {:account-id account-id :transaction-id transaction-id})
-        (routes/account-transactions-url
-          {:account-id account-id})))))
-
-(defn- editor-save-fn
-  [form]
-  (fn [e]
-    (.preventDefault e)
-    (let [result      @form
-          splits      (into [(:main-split result)]
-                            (:other-splits result))
-          transaction (-> result
-                          :transaction
-                          (assoc :splits splits))
-          query-id    [:save-transaction (cljs.core/random-uuid)]
-          query       {:query-id query-id
-                       :method   :save
-                       :resource models/transactions
-                       :args     [transaction]}]
-      (dispatch [:http-request query])
-      (swap! form assoc
-             :pending-query query-id
-             :error         nil))))
-
 (defn editor
   "An editor for modifying and creating transactions. NOTE: You should not
   set this editor up in such a way that it will persist as the transaction or
   options change. As an example, it would not be good to have a static editor
   that is always open. You should instead make destroy and create a new editor
   as you need to edit different transactions."
-  [account-id transaction]
+  [{:keys [account-id] :as context} transaction]
+  {:pre [(integer? account-id)]}
   (let [accounts       (subscribe [:accounts])
         payees         (subscribe [:payees])
         queries        (subscribe [:queries])
@@ -138,14 +109,13 @@
                                       :other-splits  (vec other-splits)
                                       :pending-query nil
                                       :error         nil})
-        cancel         (editor-cancel-fn account-id transaction)
-        save           (editor-save-fn form)]
+        cancel         (events/editor-cancel-fn context transaction)
+        save           (events/editor-save-fn form)]
     (fn
-      [account-id transaction]
-      (assert main-split)
+      [{:keys [account-id] :as context} transaction]
+      {:pre [(some? main-split)]}
       (let [pending-query (:pending-query @form)
             query-result  (when pending-query (get @queries pending-query))]
-        (js/console.log "query result" (clj->js query-result))
         (when (and pending-query (db.query/successful? query-result))
           (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
         (when (and pending-query (db.query/failed? query-result))

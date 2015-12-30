@@ -6,6 +6,7 @@
             [buckit.frontend.views.navbar       :as views.navbar]
             [buckit.frontend.views.sidebar      :as views.sidebar]
             [buckit.frontend.views.transactions :as views.transactions]
+            [buckit.frontend.utils              :as utils]
             [re-frame.core                      :refer [subscribe]]))
 
 (defmulti main-content
@@ -46,6 +47,13 @@
    {:account-id              (:account-id url-params)
     :selected-transaction-id (:transaction-id url-params)
     :edit-selected?          true}])
+
+(defmethod main-content routes/transactions
+  [_ url-params]
+  [views.transactions/transactions
+   {:account-id              (:account_id url-params)
+    :selected-transaction-id (:id url-params)
+    :edit?                   (:edit url-params)}])
 
 (defmethod main-content routes/budget
   [& args]

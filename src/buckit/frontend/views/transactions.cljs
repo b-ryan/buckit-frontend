@@ -9,6 +9,7 @@
             [buckit.frontend.routes                    :as routes]
             [buckit.frontend.utils                     :as utils]
             [buckit.frontend.views.transactions.editor :as editor]
+            [buckit.frontend.views.transactions.events :as events]
             [re-frame.core                             :refer [dispatch subscribe]]))
 
 (defn- account-to-show
@@ -50,22 +51,17 @@
     [:span.col-sm-2.col-xs-4 "Amount"]]])
 
 (defn- ledger-row
-  [account-id transaction & {:keys [is-selected?]}]
+  [context transaction]
   (let [accounts (subscribe [:accounts])
         payees   (subscribe [:payees])]
     (fn
-      [account-id transaction & {:keys [is-selected?]}]
+      [{:keys [account-id] :as context} transaction]
       (let [splits       (:splits transaction)
             main-split   (models.split/split-for-account splits account-id)
             other-splits (models.split/splits-for-other-accounts splits account-id)]
         (assert main-split)
         [:div.row
-         {:on-click #(routes/go-to
-                       ((if is-selected?
-                          routes/account-transaction-edit-url
-                          routes/account-transaction-details-url)
-                          {:account-id account-id
-                           :transaction-id (models.transaction/id transaction)}))}
+         {:on-click (events/transaction-clicked-fn context transaction)}
           [:span.col-sm-2.col-xs-4 (:date transaction)]
           [:span.col-sm-2.hidden-xs (->> transaction
                                models.transaction/payee-id
@@ -76,11 +72,10 @@
           [:span.col-sm-2.col-xs-4 (amount-to-show main-split)]]))))
 
 (defn- toolbar
-  [{:keys [account-id]}]
+  [context]
   [:div.buckit--transactions-toolbar
    [:button.btn.btn-default
-    {:on-click #(routes/go-to (routes/account-transaction-create-url
-                                {:account-id account-id}))}
+    {:on-click (events/new-transaction-clicked-fn context)}
     "+ Transaction"]])
 
 (defmulti ^:private transactions-query
@@ -137,13 +132,12 @@
                ^{:key transaction-id}
                [:div.container-fluid.buckit--ledger-row
                 {:class (when is-selected? "active")}
-                (if (and is-selected? (:edit-selected? context))
-                  [editor/editor account-id transaction]
-                  [ledger-row account-id transaction
-                   :is-selected? is-selected?])]))
-           (when (:create-transaction? context)
+                (if (and is-selected? (:edit? context))
+                  [editor/editor context transaction]
+                  [ledger-row context transaction])]))
+           (when (and (not selected-transaction-id) (:edit? context))
              [:div.container-fluid.buckit--ledger-row.active
-              [editor/editor account-id (models.transaction/create account-id)]])]
+              [editor/editor context (models.transaction/create account-id)]])]
 
           (db.query/failed? query-result)
           [:div [:p.text-danger i18n/transactions-not-loaded-error]]
@@ -162,15 +156,10 @@
   :account-id              ID of the account currently being worked on
                            (required)
 
-  :create-transaction?     Indicates whether the editor to create a new
-                           transaction should be shown.
-                           (optional -- default: false)
-
   :selected-transaction-id ID of the transaction highlighted or being edited
                            (optional -- default: nil)
 
-  :edit-selected?          Indicaes whether :selected-transaction-id is being
-                           edited
+  :edit?                   Indicaes whether edit mode will be used.
                            (optional -- default: false)"
   [context]
   [:div.container-fluid.buckit--transactions-view

@@ -1,7 +1,7 @@
 (ns buckit.frontend.routes
-  (:require [secretary.core :as secretary :refer-macros [defroute]]
-            [goog.events    :as events]
-            [re-frame.core  :refer [dispatch dispatch-sync]])
+  (:require [goog.events    :as events]
+            [re-frame.core  :refer [dispatch dispatch-sync]]
+            [secretary.core :as secretary :refer-macros [defroute]])
   (:import goog.History
            goog.History.EventType))
 
@@ -17,7 +17,14 @@
 
 (defn- ->int
   [x]
-  (js/parseInt x))
+  (when x (js/parseInt x)))
+
+(defn- ->boolean
+  [x]
+  (js/console.log x)
+  (if x
+    (not (contains? #{"false"} x))
+    false))
 
 (defroute home-url
   "/"
@@ -68,8 +75,12 @@
 
 (defroute transactions-url
   "/transactions"
-  []
-  (dispatch [:url-changed transactions]))
+  [query-params]
+  (dispatch [:url-changed transactions
+             (-> query-params
+                 (update-in [:id] ->int)
+                 (update-in [:account_id] ->int)
+                 (update-in [:edit] ->boolean))]))
 
 (defroute
   "*"

@@ -30,3 +30,11 @@
   [q]
   (and (complete? q)
        (not (successful? q))))
+
+(defn dispatch-on-status
+  [q]
+  (cond
+    (successful? q) :successful
+    (failed?     q) :failed
+    (pending?    q) :pending
+    :else           :unknown))

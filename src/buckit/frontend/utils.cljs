@@ -18,6 +18,14 @@
   (js/console.log "spy results:" (clj->js x))
   x)
 
-(defn- nil-or-integer?
+(defn nil-or-?
+  [x what?]
+  (or (nil? x) (what? x)))
+
+(defn nil-or-integer?
   [x]
-  (or (nil? x) (integer? x)))
+  (nil-or-? x integer?))
+
+(defn nil-or-boolean?
+  [x]
+  (contains? #{nil true false} x))

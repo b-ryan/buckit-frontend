@@ -121,7 +121,7 @@
     [:div.container-fluid.buckit--ledger-row
      {:class (when is-selected? "active")}
      (if (and is-selected? (:edit? context))
-       [editor/editor context transaction]
+       [editor/editor context transaction columns]
        [read-only-row context transaction columns])]))
 
 (defn ledger
@@ -129,9 +129,8 @@
   (let [queries      (subscribe [:queries])
         transactions (subscribe [:transactions])]
     (fn
-      [{:keys [account-id selected-transaction-id] :as context}]
-      {:pre [(utils/nil-or-integer? account-id)
-             (utils/nil-or-integer? selected-transaction-id)]}
+      [{:keys [selected-transaction-id] :as context}]
+      {:pre [(ctx/valid? context)]}
       (js/console.log "in ledger, context:" (clj->js context))
       (let [query            (ctx/transactions-query context)
             query-result     (get @queries (:query-id query))
@@ -167,4 +166,4 @@
                [ledger-row context transaction columns]))
            (when (and (not selected-transaction-id) (:edit? context))
              [:div.container-fluid.buckit--ledger-row.active
-              [editor/editor context (models.transaction/create account-id)]])])))))
+              [editor/editor context (ctx/new-transaction context)]])])))))

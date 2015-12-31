@@ -15,6 +15,12 @@
             [buckit.frontend.utils              :as utils]
             [clojure.set                        :refer [rename-keys]]))
 
+(defn valid?
+  [{:keys [account-id selected-transaction-id edit?]}]
+  (and (utils/nil-or-integer? account-id)
+       (utils/nil-or-integer? selected-transaction-id)
+       (utils/nil-or-boolean? edit?)))
+
 (def valid-mode? (partial contains? #{:no-account :single-account}))
 
 (defn mode
@@ -47,6 +53,10 @@
                     :edit       :edit?})
       (select-keys #{:account-id :selected-transaction-id :edit?})))
 
+(defn new-transaction
+  ; FIXME doesn't work for :no-account mode
+  [context]
+  (models.transaction/create (:account-id context)))
 ; ----------------------------------------------------------------------------
 (defmulti transactions-query mode)
 

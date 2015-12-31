@@ -10,9 +10,10 @@
             [buckit.frontend.models.transaction        :as models.transaction]
             [buckit.frontend.routes                    :as routes]
             [buckit.frontend.utils                     :as utils]
-            [buckit.frontend.views.transactions.events :as events]
-            [re-frame.core                             :refer [dispatch subscribe]]
-            [reagent.core                              :as reagent]))
+            [buckit.frontend.views.transactions.context :as ctx]
+            [buckit.frontend.views.transactions.events  :as events]
+            [re-frame.core                              :refer [dispatch subscribe]]
+            [reagent.core                               :as reagent]))
 
 (defn- editor-div
   [width content]
@@ -93,14 +94,13 @@
   options change. As an example, it would not be good to have a static editor
   that is always open. You should instead make destroy and create a new editor
   as you need to edit different transactions."
-  [{:keys [account-id] :as context} transaction]
-  {:pre [(integer? account-id)]}
+  [context transaction]
   (let [accounts       (subscribe [:accounts])
         payees         (subscribe [:payees])
         queries        (subscribe [:queries])
         splits         (:splits transaction)
-        main-split     (models.split/split-for-account splits account-id)
-        other-splits   (models.split/splits-for-other-accounts splits account-id)
+        main-split     (ctx/main-split context transaction)
+        other-splits   (ctx/other-splits context transaction)
         form           (reagent/atom {:transaction   transaction
                                       :main-split    main-split
                                       ; For some reason, this doesn't work unless
@@ -112,7 +112,7 @@
         cancel         (events/editor-cancel-fn context transaction)
         save           (events/editor-save-fn form)]
     (fn
-      [{:keys [account-id] :as context} transaction]
+      [context transaction]
       {:pre [(some? main-split)]}
       (let [pending-query (:pending-query @form)
             query-result  (when pending-query (get @queries pending-query))]

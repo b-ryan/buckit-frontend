@@ -1,40 +1,40 @@
 (ns buckit.frontend.views.transactions.events
-  (:require [buckit.frontend.models.core        :as models]
-            [buckit.frontend.models.transaction :as models.transaction]
-            [buckit.frontend.routes             :as routes]
-            [buckit.frontend.utils              :as utils]
-            [re-frame.core                      :refer [dispatch]]))
+  (:require [buckit.frontend.models.core                :as models]
+            [buckit.frontend.models.transaction         :as models.transaction]
+            [buckit.frontend.routes                     :as routes]
+            [buckit.frontend.utils                      :as utils]
+            [buckit.frontend.views.transactions.context :as ctx]
+            [re-frame.core                              :refer [dispatch]]))
 
 ;TODO maybe these should be handlers?
 
 (defn transaction-clicked-fn
-  [{:keys [account-id selected-transaction-id]} transaction]
+  [context transaction]
   (let [transaction-id (models.transaction/id transaction)
-        is-selected?   (= selected-transaction-id transaction-id)]
+        is-selected?   (ctx/is-selected? context transaction)
+        new-context    (assoc context
+                              :selected-transaction-id transaction-id
+                              :edit?                   is-selected?)]
     (fn [e]
       (routes/go-to (routes/transactions-url
-                      {:query-params {:id         transaction-id
-                                      :account_id account-id
-                                      :edit       is-selected?}})))))
+                      {:query-params (ctx/->url-params new-context)})))))
 
 (defn new-transaction-clicked-fn
-  [{:keys [account-id]}]
-  (fn [e]
-    (routes/go-to (routes/transactions-url
-                    {:query-params {:account_id account-id
-                                    :edit       true}}))))
+  [{:keys [account-id] :as context}]
+  (let [new-context (assoc context
+                           :selected-transaction-id nil
+                           :edit?                   true)]
+    (fn [e]
+      (routes/go-to (routes/transactions-url
+                      {:query-params (ctx/->url-params new-context)})))))
 
 (defn editor-cancel-fn
   [{:keys [account-id] :as context} transaction]
-  (let [base-params    {:account_id account-id}
-        transaction-id (models.transaction/id transaction) 
-        params         (if transaction-id
-                         (assoc base-params :id transaction-id)
-                         base-params)]
+  (let [new-context (assoc context :edit? false)]
     (fn [e]
       (.preventDefault e)
       (routes/go-to (routes/transactions-url
-                      {:query-params params})))))
+                      {:query-params (ctx/->url-params new-context)})))))
 
 (defn editor-save-fn
   [form]

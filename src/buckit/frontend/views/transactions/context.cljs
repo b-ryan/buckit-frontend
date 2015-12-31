@@ -11,9 +11,11 @@
                            (optional -- default: false)"
   (:require [buckit.frontend.models.core        :as models]
             [buckit.frontend.models.split       :as models.split]
-            [buckit.frontend.models.transaction :as models.transaction]))
+            [buckit.frontend.models.transaction :as models.transaction]
+            [buckit.frontend.utils              :as utils]
+            [clojure.set                        :refer [rename-keys]]))
 
-(def valid-mode? (partial contains? #{:no-account :single-account :multi-account}))
+(def valid-mode? (partial contains? #{:no-account :single-account}))
 
 (defn mode
   [context]
@@ -24,8 +26,23 @@
       :else             :single-account)))
 
 (defn is-selected?
-  [context transaction-id]
-  (= (:selected-transaction-id context) transaction-id))
+  [context transaction]
+  (= (:selected-transaction-id context)
+     (models.transaction/id transaction)))
+
+(defn ->url-params
+  [context]
+  (-> context
+      (rename-keys {:account-id              :account_id
+                    :selected-transaction-id :id
+                    :edit?                   :edit})
+      (utils/filter-map-by-v some?)))
+
+(defn <-url-params
+  [url-params]
+  (rename-keys url-params {:account_id :account-id
+                           :id         :selected-transaction-id
+                           :edit       :edit?}))
 
 ; ----------------------------------------------------------------------------
 (defmulti transactions-query mode)

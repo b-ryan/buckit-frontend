@@ -70,8 +70,7 @@
 
 (defn- ledger-row
   [context transaction]
-  (let [transaction-id (models.transaction/id transaction)
-        is-selected?   (ctx/is-selected? context transaction-id)]
+  (let [is-selected? (ctx/is-selected? context transaction)]
     [:div.container-fluid.buckit--ledger-row
      {:class (when is-selected? "active")}
      (if (and is-selected? (:edit? context))
@@ -88,6 +87,7 @@
       [{:keys [account-id selected-transaction-id] :as context}]
       {:pre [(utils/nil-or-integer? account-id)
              (utils/nil-or-integer? selected-transaction-id)]}
+      (js/console.log "in ledger, context:" (clj->js context))
       (let [query            (ctx/transactions-query context)
             query-result     (get @queries (:query-id query))
             transactions     (ctx/filter-transactions context (vals @transactions))]

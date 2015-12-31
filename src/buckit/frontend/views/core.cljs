@@ -1,13 +1,14 @@
 (ns buckit.frontend.views.core
-  (:require [buckit.frontend.db.query           :as db.query]
-            [buckit.frontend.i18n               :as i18n]
-            [buckit.frontend.routes             :as routes]
-            [buckit.frontend.views.accounts     :as views.accounts]
-            [buckit.frontend.views.navbar       :as views.navbar]
-            [buckit.frontend.views.sidebar      :as views.sidebar]
-            [buckit.frontend.views.transactions :as views.transactions]
-            [buckit.frontend.utils              :as utils]
-            [re-frame.core                      :refer [subscribe]]))
+  (:require [buckit.frontend.db.query                   :as db.query]
+            [buckit.frontend.i18n                       :as i18n]
+            [buckit.frontend.routes                     :as routes]
+            [buckit.frontend.views.accounts             :as views.accounts]
+            [buckit.frontend.views.navbar               :as views.navbar]
+            [buckit.frontend.views.sidebar              :as views.sidebar]
+            [buckit.frontend.views.transactions         :as views.transactions]
+            [buckit.frontend.views.transactions.context :as ctx]
+            [buckit.frontend.utils                      :as utils]
+            [re-frame.core                              :refer [subscribe]]))
 
 (defmulti main-content
   (fn [route] route))
@@ -26,10 +27,7 @@
 
 (defmethod main-content routes/transactions
   [_ url-params]
-  [views.transactions/transactions
-   {:account-id              (:account_id url-params)
-    :selected-transaction-id (:id url-params)
-    :edit?                   (:edit url-params)}])
+  [views.transactions/transactions (ctx/<-url-params url-params)])
 
 (defmethod main-content routes/budget
   [& args]
@@ -49,6 +47,7 @@
       (let [acc-result  (get @queries :all-accounts)
             pay-result  (get @queries :all-payees)
             all-results [acc-result pay-result]]
+        (js/console.log "in core view, all-results:" (clj->js all-results))
         [:div
          [views.navbar/navbar]
          (if (some db.query/failed? all-results)

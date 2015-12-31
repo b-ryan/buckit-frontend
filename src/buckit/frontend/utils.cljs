@@ -9,7 +9,7 @@
 (defn filter-map-by-v
   "Filters a map and returns a map. Only the values will be passed into the
   filter function."
-  [f m]
+  [m f]
   {:pre [(fn? f) (map? m)]}
   (into {} (filter (fn [[k v]] (f v)) m)))
 

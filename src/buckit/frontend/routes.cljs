@@ -17,9 +17,8 @@
 
 (defn- ->boolean
   [x]
-  (js/console.log x)
   (if x
-    (not (contains? #{"false"} x))
+    (not (contains? #{"false" "0"} x))
     false))
 
 (defroute home-url

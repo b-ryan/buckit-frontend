@@ -36,13 +36,16 @@
       (rename-keys {:account-id              :account_id
                     :selected-transaction-id :id
                     :edit?                   :edit})
+      (select-keys #{:account_id :id :edit})
       (utils/filter-map-by-v some?)))
 
 (defn <-url-params
   [url-params]
-  (rename-keys url-params {:account_id :account-id
-                           :id         :selected-transaction-id
-                           :edit       :edit?}))
+  (-> url-params
+      (rename-keys {:account_id :account-id
+                    :id         :selected-transaction-id
+                    :edit       :edit?})
+      (select-keys #{:account-id :selected-transaction-id :edit?})))
 
 ; ----------------------------------------------------------------------------
 (defmulti transactions-query mode)

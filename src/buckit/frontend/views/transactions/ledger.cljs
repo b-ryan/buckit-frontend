@@ -13,25 +13,72 @@
             [buckit.frontend.views.transactions.events  :as events]
             [re-frame.core                              :refer [dispatch subscribe]]))
 
-(def ledger-header
+(def columns
+  [{:name            "Date"
+    :width-on-mobile 4
+    :width-normal    2}
+   {:name            "Payee"
+    :width-on-mobile 0
+    :width-normal    2}
+   {:name            "Category"
+    :width-on-mobile 4
+    :width-normal    3}
+   {:name            "Memo"
+    :width-on-mobile 0
+    :width-normal    3}
+   {:name            "Amount"
+    :width-on-mobile 4
+    :width-normal    2}])
+
+(defn- col-width->class
+  [width size]
+  (if (> width 0)
+    (str "col-" size "-" width)
+    (str "hidden-" size)))
+
+(defn- column-class
+  [column]
+  (str (col-width->class (:width-on-mobile column) "xs")
+       " "
+       (col-width->class (:width-normal column) "sm")))
+
+(defn- header
+  [columns]
   [:div.container-fluid
    [:div.row.buckit--ledger-header
-    [:span.col-sm-2.col-xs-4 "Date"]
-    [:span.col-sm-2.hidden-xs "Payee"]
-    [:span.col-sm-3.col-xs-4 "Category"]
-    [:span.col-sm-3.hidden-xs "Memo"]
-    [:span.col-sm-2.col-xs-4 "Amount"]]])
+    (for [column columns]
+      ^{:key (:name column)}
+      [:span {:class (column-class column)} (:name column)])]])
 
-(defn- account-to-show
-  [context transaction accounts] ; FIXME make accounts part of context?
-  (let [other-splits (ctx/other-splits context transaction)]
+(defmulti display-value (fn [_ _ column] (:name column)))
+
+(defmethod display-value "Date"
+  [context transaction _]
+  (:date transaction))
+
+(defmethod display-value "Payee"
+  [context transaction _]
+  (->> transaction
+       models.transaction/payee-id
+       (get @(:payees context))
+       models.payee/name))
+
+(defmethod display-value "Category"
+  [context transaction _]
+  (let [other-splits (ctx/other-splits context transaction)
+        accounts     (:accounts context)]
     (if (> (count other-splits) 1)
       "Splits"
       (->> other-splits
            first
            models.split/account-id
-           (get accounts)
+           (get @accounts)
            models.account/name))))
+
+(defmethod display-value "Memo"
+  ; FIXME
+  [& _]
+  "")
 
 (defn- amount-glyphicon
   "Returns a left or right arrow glyphicon to show whether money left the
@@ -43,8 +90,8 @@
          " "
          (if expense? "expense" "income"))))
 
-(defn- amount-to-show
-  [context transaction]
+(defmethod display-value "Amount"
+  [context transaction _]
   (let [amount (:amount (ctx/main-split context transaction))]
     [:span {:class (amount-glyphicon amount)
             :aria-hidden true}
@@ -52,32 +99,30 @@
      (str " $" (js/Math.abs amount))]))
 
 (defn- read-only-row
-  [context transaction]
+  [context transaction columns]
   (let [accounts (subscribe [:accounts])
         payees   (subscribe [:payees])]
     (fn
-      [context transaction]
-      [:div.row
-       {:on-click (events/transaction-clicked-fn context transaction)}
-       [:span.col-sm-2.col-xs-4 (:date transaction)]
-       [:span.col-sm-2.hidden-xs (->> transaction
-                                      models.transaction/payee-id
-                                      (get @payees)
-                                      models.payee/name)]
-       [:span.col-sm-3.col-xs-4 (account-to-show context transaction @accounts)]
-       [:span.col-sm-3.hidden-xs]
-       [:span.col-sm-2.col-xs-4 (amount-to-show context transaction)]])))
+      [context transaction columns]
+      (let [context (assoc context
+                           :accounts accounts
+                           :payees   payees)]
+        [:div.row
+         {:on-click (events/transaction-clicked-fn context transaction)}
+         (doall (for [column columns]
+                  ^{:key (:name column)}
+                  [:span
+                   {:class (column-class column)}
+                   (display-value context transaction column)]))]))))
 
 (defn- ledger-row
-  [context transaction]
+  [context transaction columns]
   (let [is-selected? (ctx/is-selected? context transaction)]
     [:div.container-fluid.buckit--ledger-row
      {:class (when is-selected? "active")}
      (if (and is-selected? (:edit? context))
        [editor/editor context transaction]
-       [read-only-row context transaction])]))
-
-; (defn- )
+       [read-only-row context transaction columns])]))
 
 (defn ledger
   [context]
@@ -90,7 +135,9 @@
       (js/console.log "in ledger, context:" (clj->js context))
       (let [query            (ctx/transactions-query context)
             query-result     (get @queries (:query-id query))
-            transactions     (ctx/filter-transactions context (vals @transactions))]
+            transactions     (ctx/filter-transactions context (vals @transactions))
+            ; FIXME alter for :no-account mode
+            columns          columns]
         (cond
           ; -----------------------------------------------------------------
           ; NO QUERY
@@ -113,12 +160,11 @@
           ; -----------------------------------------------------------------
           (db.query/successful? query-result)
           [:div.buckit--ledger
-           ledger-header
+           [header columns]
            (doall
              (for [transaction transactions]
-               (with-meta
-                 (ledger-row context transaction)
-                 {:key (models.transaction/id transaction)})))
+               ^{:key (models.transaction/id transaction)}
+               [ledger-row context transaction columns]))
            (when (and (not selected-transaction-id) (:edit? context))
              [:div.container-fluid.buckit--ledger-row.active
               [editor/editor context (models.transaction/create account-id)]])])))))

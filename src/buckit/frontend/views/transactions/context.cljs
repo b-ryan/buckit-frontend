@@ -8,7 +8,10 @@
                            (optional -- default: nil)
 
   :edit?                   Indicaes whether edit mode will be used.
-                           (optional -- default: false)"
+                           (optional -- default: false)
+
+  The context may also be used to hold subscriptions or other data needed for
+  sub-views."
   (:require [buckit.frontend.models.core        :as models]
             [buckit.frontend.models.split       :as models.split]
             [buckit.frontend.models.transaction :as models.transaction]

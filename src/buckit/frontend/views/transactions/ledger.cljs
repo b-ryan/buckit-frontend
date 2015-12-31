@@ -1,6 +1,8 @@
 (ns buckit.frontend.views.transactions.ledger
   (:require [buckit.frontend.db.query                   :as db.query]
             [buckit.frontend.i18n                       :as i18n]
+            [buckit.frontend.ui                         :as ui]
+            [buckit.frontend.keyboard                   :as keyboard]
             [buckit.frontend.models.account             :as models.account]
             [buckit.frontend.models.core                :as models]
             [buckit.frontend.models.split               :as models.split]
@@ -9,9 +11,9 @@
             [buckit.frontend.routes                     :as routes]
             [buckit.frontend.utils                      :as utils]
             [buckit.frontend.views.transactions.context :as ctx]
-            [buckit.frontend.views.transactions.editor  :as editor]
             [buckit.frontend.views.transactions.events  :as events]
-            [re-frame.core                              :refer [dispatch subscribe]]))
+            [re-frame.core                              :refer [dispatch subscribe]]
+            [reagent.core                               :as reagent]))
 
 (def columns
   [{:name            "Date"
@@ -50,20 +52,23 @@
       ^{:key (:name column)}
       [:span {:class (column-class column)} (:name column)])]])
 
-(defmulti display-value (fn [_ _ column] (:name column)))
+; ----------------------------------------------------------------------------
+;     READ ONLY
+; ----------------------------------------------------------------------------
+(defmulti property-display (fn [_ _ column] (:name column)))
 
-(defmethod display-value "Date"
+(defmethod property-display "Date"
   [context transaction _]
   (:date transaction))
 
-(defmethod display-value "Payee"
+(defmethod property-display "Payee"
   [context transaction _]
   (->> transaction
        models.transaction/payee-id
        (get @(:payees context))
        models.payee/name))
 
-(defmethod display-value "Category"
+(defmethod property-display "Category"
   [context transaction _]
   (let [other-splits (ctx/other-splits context transaction)
         accounts     (:accounts context)]
@@ -75,7 +80,7 @@
            (get @accounts)
            models.account/name))))
 
-(defmethod display-value "Memo"
+(defmethod property-display "Memo"
   ; FIXME
   [& _]
   "")
@@ -90,7 +95,7 @@
          " "
          (if expense? "expense" "income"))))
 
-(defmethod display-value "Amount"
+(defmethod property-display "Amount"
   [context transaction _]
   (let [amount (:amount (ctx/main-split context transaction))]
     [:span {:class (amount-glyphicon amount)
@@ -113,15 +118,155 @@
                   ^{:key (:name column)}
                   [:span
                    {:class (column-class column)}
-                   (display-value context transaction column)]))]))))
+                   (property-display context transaction column)]))]))))
 
+; ----------------------------------------------------------------------------
+;     EDITOR
+; ----------------------------------------------------------------------------
+(defn- editor-div
+  [width content]
+  [:div.buckit--ledger-editor-input {:class (str "col-sm-" width)} content])
+
+(defn- input
+  [& options]
+  [:input.form-control.input-sm (apply hash-map options)])
+
+(defn- date-editor
+  [form]
+  (let [path [:transaction models.transaction/date]]
+  (editor-div 2 [ui/initial-focus-wrapper
+                 (input :type "text" :placeholder "Date"
+                        :value (get-in @form path)
+                        :on-change (ui/input-change-fn form path))])))
+
+(defn- payee-editor
+  [form payees]
+  (let [path [:transaction models.transaction/payee-id]]
+    (editor-div 2 [:select.form-control.input-sm
+                   {:type "text"
+                    :value (get-in @form path)
+                    :on-change (ui/input-change-fn form path)}
+                   (into (list ^{:key :empty} [:option])
+                         (for [[payee-id payee] @payees]
+                           ^{:key payee-id}
+                           [:option
+                            {:key payee-id :visible? (constantly true)}
+                            (models.payee/name payee)]))])))
+
+(defn- account-editor
+  [form accounts split-path]
+  (let [path (conj split-path models.split/account-id)]
+    (editor-div 3 [:select.form-control.input-sm
+                   {:type "text"
+                    :value (get-in @form split-path)
+                    :on-change (ui/input-change-fn form split-path)}
+                   (into (list ^{:key :empty} [:option])
+                         (for [[account-id account] @accounts]
+                           ^{:key account-id}
+                           [:option
+                            {:key account-id :visible? (constantly true)}
+                            (models.account/name account)]))])))
+
+(defn- memo-editor
+  [form split-path]
+  (let [path (conj split-path models.split/memo)]
+    (editor-div 3 (input :type "number" :placeholder "Memo"
+                         :value (get-in @form path)
+                         :on-change (ui/input-change-fn form path)))))
+
+(defn- amount-editor
+  [form split-path]
+  (let [path (conj split-path models.split/amount)]
+    (editor-div 2 (input :type "number" :placeholder "Amount"
+                         :value (get-in @form path)
+                         :on-change (ui/input-change-fn form path)))))
+
+(defn- split-editor
+  [form accounts split-path]
+  (list
+    (with-meta
+      (account-editor form accounts split-path)
+      {:key :account-id})
+
+    (with-meta
+      (memo-editor form split-path)
+      {:key :memo})
+
+    (with-meta
+      (amount-editor form split-path)
+      {:key :amount})))
+
+(defn editor-row
+  "An editor for modifying and creating transactions. NOTE: You should not
+  set this editor up in such a way that it will persist as the transaction or
+  options change. As an example, it would not be good to have a static editor
+  that is always open. You should instead make destroy and create a new editor
+  as you need to edit different transactions."
+  [context transaction columns]
+  (let [accounts       (subscribe [:accounts])
+        payees         (subscribe [:payees])
+        queries        (subscribe [:queries])
+        splits         (:splits transaction)
+        main-split     (ctx/main-split context transaction)
+        other-splits   (ctx/other-splits context transaction)
+        form           (reagent/atom {:transaction   transaction
+                                      :main-split    main-split
+                                      ; For some reason, this doesn't work unless
+                                      ; it's a vector. I would guess it's because
+                                      ; (get-in (list 1) [0]) => nil
+                                      :other-splits  (vec other-splits)
+                                      :pending-query nil
+                                      :error         nil})
+        cancel         (events/editor-cancel-fn context transaction)
+        save           (events/editor-save-fn form)]
+    (fn
+      [context transaction]
+      {:pre [(some? main-split)]}
+      (let [pending-query (:pending-query @form)
+            query-result  (when pending-query (get @queries pending-query))]
+        (when (and pending-query (db.query/successful? query-result))
+          (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
+        (when (and pending-query (db.query/failed? query-result))
+          (js/setTimeout (fn [] (swap! form assoc
+                                       :pending-query nil
+                                       :error         i18n/generic-save-error))))
+        [:form.buckit--transaction-editor
+         {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
+         [:div.row
+          (date-editor form)
+          (payee-editor form payees)
+          (split-editor form accounts [:main-split])]
+         (doall
+           (for [i (range (count other-splits))]
+             ^{:key i}
+             [:div.row
+              [:div.col-sm-4]
+              (split-editor form accounts [:other-splits i])]))
+         [:div.row
+          [:div.col-sm-8
+           [:p.text-danger (:error @form)]]
+          [:div.col-sm-4
+           [:div.btn-toolbar.pull-right
+            [:button.btn.btn-danger.btn-xs
+             {:type "button" :on-click cancel} "Cancel"]
+            [:button.btn.btn-success.btn-xs.has-spinnner
+             {:type "submit" :on-click save
+              :class (when pending-query "show-spinner")
+              :disabled pending-query}
+             (if pending-query
+               [:span.buckit--btn-spinner.glyphicon.glyphicon-refresh]
+               "Save")]]]]]))))
+
+; ----------------------------------------------------------------------------
+;     LEDGER
+; ----------------------------------------------------------------------------
 (defn- ledger-row
   [context transaction columns]
   (let [is-selected? (ctx/is-selected? context transaction)]
     [:div.container-fluid.buckit--ledger-row
      {:class (when is-selected? "active")}
      (if (and is-selected? (:edit? context))
-       [editor/editor context transaction columns]
+       [editor-row context transaction columns]
        [read-only-row context transaction columns])]))
 
 (defn ledger
@@ -166,4 +311,4 @@
                [ledger-row context transaction columns]))
            (when (and (not selected-transaction-id) (:edit? context))
              [:div.container-fluid.buckit--ledger-row.active
-              [editor/editor context (ctx/new-transaction context)]])])))))
+              [editor-row context (ctx/new-transaction context) columns]])])))))

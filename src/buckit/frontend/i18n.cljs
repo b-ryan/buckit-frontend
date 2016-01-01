@@ -12,3 +12,6 @@
 
 (def generic-save-error
   "An error occurred while saving.")
+
+(def generic-save-success
+  "Saved!")

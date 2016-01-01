@@ -204,18 +204,17 @@
                       {:key (:name column)}))))
 
 (defn- editor-toolbar
-  [{:keys [form pending-query cancel-fn save-fn]}]
+  [{:keys [form cancel-fn save-fn]} & {:keys [show-spinner?]}]
   [:div.row
-   [:div.col-sm-8
-    [:p.text-danger (:error @form)]]
+   [:div.col-sm-8 [:p {:class (:class (:msg @form))} (:text (:msg @form))]]
    [:div.col-sm-4
     [:div.btn-toolbar.pull-right
      [:button.btn.btn-danger.btn-xs {:type "button" :on-click cancel-fn} "Cancel"]
      [:button.btn.btn-success.btn-xs.has-spinnner
       {:type "submit" :on-click save-fn
-       :class (when pending-query "show-spinner")
-       :disabled pending-query}
-      (if pending-query
+       :class (when show-spinner? "show-spinner")
+       :disabled show-spinner?}
+      (if show-spinner?
         [:span.buckit--btn-spinner.glyphicon.glyphicon-refresh]
         "Save")]]]])
 
@@ -239,27 +238,31 @@
                                       ; (get-in (list 1) [0]) => nil
                                       :other-splits  (vec other-splits)
                                       :pending-query nil
-                                      :error         nil})]
+                                      :msg           {}})
+        cancel-fn      (events/editor-cancel-fn context transaction)
+        save-fn        (events/editor-save-fn form)
+        editor-context (assoc context
+                              :accounts  accounts
+                              :payees    payees
+                              :form      form
+                              :cancel-fn cancel-fn
+                              :save-fn   save-fn)]
     (fn
-      [context transaction columns]
-      {:pre [(some? main-split)]}
-      (let [pending-query      (:pending-query @form)
-            query-result       (when pending-query (get @queries pending-query))
-            cancel-fn          (events/editor-cancel-fn context transaction)
-            save-fn            (events/editor-save-fn form)
-            editor-context     (assoc context
-                                      :accounts      accounts
-                                      :payees        payees
-                                      :form          form
-                                      :pending-query pending-query
-                                      :cancel-fn     cancel-fn
-                                      :save-fn       save-fn)]
-        (when (and pending-query (db.query/successful? query-result))
-          (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
-        (when (and pending-query (db.query/failed? query-result))
+      [& _] ; normally you should match the arguments to the parent-level fn,
+            ; but here we intentionally want the variables from the parent
+            ; level to be in this closure.
+      (let [pending-query (:pending-query @form)
+            query-result  (when pending-query (get @queries pending-query))]
+
+        (when (and pending-query (db.query/complete? query-result))
           (js/setTimeout (fn [] (swap! form assoc
                                        :pending-query nil
-                                       :error         i18n/generic-save-error))))
+                                       :msg           (if (db.query/failed? query-result)
+                                                        {:text  i18n/generic-save-error
+                                                         :class "text-danger"}
+                                                        {:text  i18n/generic-save-success
+                                                         :class "text-success"})))))
+
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel-fn %))}
          [:div.row
@@ -272,7 +275,7 @@
                   [:div.row
                    [:div.col-sm-4]
                    (split-editor editor-context columns [:other-splits i])]))
-         [editor-toolbar editor-context]]))))
+         [editor-toolbar editor-context :show-spinner? pending-query]]))))
 
 ; ----------------------------------------------------------------------------
 ;     LEDGER

@@ -206,7 +206,8 @@
 (defn- editor-toolbar
   [{:keys [form cancel-fn save-fn]} & {:keys [show-spinner?]}]
   [:div.row
-   [:div.col-sm-8 [:p {:class (:class (:msg @form))} (:text (:msg @form))]]
+   (let [msg (:msg @form)]
+     [:div.col-sm-8 [:p {:class (:class msg)} (:text msg)]])
    [:div.col-sm-4
     [:div.btn-toolbar.pull-right
      [:button.btn.btn-danger.btn-xs {:type "button" :on-click cancel-fn} "Cancel"]

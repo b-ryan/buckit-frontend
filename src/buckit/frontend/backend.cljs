@@ -3,7 +3,7 @@
             [buckit.frontend.utils       :as utils]
             [cljs-http.client            :as http]))
 
-(def ^:private base-url "http://192.168.1.105:8080/api/")
+(def ^:private base-url "http://localhost:8080/api/")
 
 (defn valid-method?
   [method]

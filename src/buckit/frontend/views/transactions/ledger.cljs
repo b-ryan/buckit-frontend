@@ -16,21 +16,35 @@
             [reagent.core                               :as reagent]))
 
 (def columns
-  [{:name            "Date"
-    :width-on-mobile 4
-    :width-normal    2}
-   {:name            "Payee"
-    :width-on-mobile 0
-    :width-normal    2}
-   {:name            "Category"
-    :width-on-mobile 4
-    :width-normal    3}
-   {:name            "Memo"
-    :width-on-mobile 0
-    :width-normal    3}
-   {:name            "Amount"
-    :width-on-mobile 4
-    :width-normal    2}])
+  "All columns where :is-split-property? is true should be to the right."
+  [{:name               "Date"
+    :width-on-mobile    4
+    :width-normal       2
+    :is-split-property? false}
+   {:name               "Payee"
+    :width-on-mobile    0
+    :width-normal       2
+    :is-split-property? false}
+   {:name               "Category"
+    :width-on-mobile    4
+    :width-normal       3
+    :is-split-property? true}
+   {:name               "Memo"
+    :width-on-mobile    0
+    :width-normal       3
+    :is-split-property? true}
+   {:name               "Amount"
+    :width-on-mobile    4
+    :width-normal       2
+    :is-split-property? true}])
+
+(defn- non-splits-columns
+  [columns]
+  (remove :is-split-property? columns))
+
+(defn- splits-columns
+  [columns]
+  (filter :is-split-property? columns))
 
 (defn- col-width->class
   [width size]
@@ -131,16 +145,18 @@
   [& options]
   [:input.form-control.input-sm (apply hash-map options)])
 
-(defn- date-editor
-  [form]
-  (let [path [:transaction models.transaction/date]]
-  (editor-div 2 [ui/initial-focus-wrapper
-                 (input :type "text" :placeholder "Date"
-                        :value (get-in @form path)
-                        :on-change (ui/input-change-fn form path))])))
+(defmulti property-editor (fn [_ column] (:name column)))
 
-(defn- payee-editor
-  [form payees]
+(defmethod property-editor "Date"
+  [{:keys [form]} _]
+  (let [path [:transaction models.transaction/date]]
+    (editor-div 2 [ui/initial-focus-wrapper
+                   (input :type "text" :placeholder "Date"
+                          :value (get-in @form path)
+                          :on-change (ui/input-change-fn form path))])))
+
+(defmethod property-editor "Payee"
+  [{:keys [form payees]} _]
   (let [path [:transaction models.transaction/payee-id]]
     (editor-div 2 [:select.form-control.input-sm
                    {:type "text"
@@ -153,8 +169,8 @@
                             {:key payee-id :visible? (constantly true)}
                             (models.payee/name payee)]))])))
 
-(defn- account-editor
-  [form accounts split-path]
+(defmethod property-editor "Category"
+  [{:keys [form accounts]} _ split-path]
   (let [path (conj split-path models.split/account-id)]
     (editor-div 3 [:select.form-control.input-sm
                    {:type "text"
@@ -167,34 +183,26 @@
                             {:key account-id :visible? (constantly true)}
                             (models.account/name account)]))])))
 
-(defn- memo-editor
-  [form split-path]
+(defmethod property-editor "Memo"
+  [{:keys [form]} _ split-path]
   (let [path (conj split-path models.split/memo)]
     (editor-div 3 (input :type "number" :placeholder "Memo"
                          :value (get-in @form path)
                          :on-change (ui/input-change-fn form path)))))
 
-(defn- amount-editor
-  [form split-path]
+(defmethod property-editor "Amount"
+  [{:keys [form]} _ split-path]
   (let [path (conj split-path models.split/amount)]
     (editor-div 2 (input :type "number" :placeholder "Amount"
                          :value (get-in @form path)
                          :on-change (ui/input-change-fn form path)))))
 
 (defn- split-editor
-  [form accounts split-path]
-  (list
-    (with-meta
-      (account-editor form accounts split-path)
-      {:key :account-id})
-
-    (with-meta
-      (memo-editor form split-path)
-      {:key :memo})
-
-    (with-meta
-      (amount-editor form split-path)
-      {:key :amount})))
+  [context columns split-path]
+  (doall (for [column (splits-columns columns)]
+           (with-meta
+             (property-editor context column split-path)
+             {:key (:name column)}))))
 
 (defn editor-row
   "An editor for modifying and creating transactions. NOTE: You should not
@@ -218,12 +226,18 @@
                                       :pending-query nil
                                       :error         nil})
         cancel         (events/editor-cancel-fn context transaction)
-        save           (events/editor-save-fn form)]
+        save           (events/editor-save-fn form)
+        ]
     (fn
-      [context transaction]
+      [context transaction columns]
       {:pre [(some? main-split)]}
       (let [pending-query (:pending-query @form)
-            query-result  (when pending-query (get @queries pending-query))]
+            query-result  (when pending-query (get @queries pending-query))
+            ; FIXME initialize the form in here
+            context       (assoc context
+                                 :accounts accounts
+                                 :payees   payees
+                                 :form     form)]
         (when (and pending-query (db.query/successful? query-result))
           (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
         (when (and pending-query (db.query/failed? query-result))
@@ -233,15 +247,17 @@
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
          [:div.row
-          (date-editor form)
-          (payee-editor form payees)
-          (split-editor form accounts [:main-split])]
+          (doall (for [column (non-splits-columns columns)]
+                   (with-meta
+                     (property-editor context column)
+                     {:key (:name column)})))
+          (split-editor context columns [:main-split])]
          (doall
            (for [i (range (count other-splits))]
              ^{:key i}
              [:div.row
               [:div.col-sm-4]
-              (split-editor form accounts [:other-splits i])]))
+              (split-editor context columns [:other-splits i])]))
          [:div.row
           [:div.col-sm-8
            [:p.text-danger (:error @form)]]

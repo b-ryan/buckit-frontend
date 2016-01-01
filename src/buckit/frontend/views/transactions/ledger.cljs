@@ -224,20 +224,18 @@
                                       ; (get-in (list 1) [0]) => nil
                                       :other-splits  (vec other-splits)
                                       :pending-query nil
-                                      :error         nil})
-        cancel         (events/editor-cancel-fn context transaction)
-        save           (events/editor-save-fn form)
-        ]
+                                      :error         nil})]
     (fn
       [context transaction columns]
       {:pre [(some? main-split)]}
       (let [pending-query (:pending-query @form)
             query-result  (when pending-query (get @queries pending-query))
-            ; FIXME initialize the form in here
             context       (assoc context
                                  :accounts accounts
                                  :payees   payees
-                                 :form     form)]
+                                 :form     form)
+            cancel        (events/editor-cancel-fn context transaction)
+            save          (events/editor-save-fn context)]
         (when (and pending-query (db.query/successful? query-result))
           (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
         (when (and pending-query (db.query/failed? query-result))

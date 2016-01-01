@@ -37,7 +37,7 @@
                       {:query-params (ctx/->url-params new-context)})))))
 
 (defn editor-save-fn
-  [form]
+  [{:keys [form]}]
   (fn [e]
     (.preventDefault e)
     (let [result      @form

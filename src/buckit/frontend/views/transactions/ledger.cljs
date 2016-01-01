@@ -51,6 +51,18 @@
   [columns]
   (filter :is-split-property? columns))
 
+(defn- total-mobile-width
+  [columns]
+  (->> columns
+       (map :width-on-mobile)
+       (reduce +)))
+
+(defn- total-normal-width
+  [columns]
+  (->> columns
+       (map :width-normal)
+       (reduce +)))
+
 (defn- col-width->class
   [width size]
   (if (> width 0)
@@ -241,28 +253,32 @@
   that is always open. You should instead make destroy and create a new editor
   as you need to edit different transactions."
   [context transaction columns]
-  (let [accounts       (subscribe [:accounts])
-        payees         (subscribe [:payees])
-        queries        (subscribe [:queries])
-        splits         (:splits transaction)
-        main-split     (ctx/main-split context transaction)
-        other-splits   (ctx/other-splits context transaction)
-        form           (reagent/atom {:transaction   transaction
-                                      :main-split    main-split
-                                      ; For some reason, this doesn't work unless
-                                      ; it's a vector. I would guess it's because
-                                      ; (get-in (list 1) [0]) => nil
-                                      :other-splits  (vec other-splits)
-                                      :pending-query nil
-                                      :msg           {}})
-        cancel-fn      (events/editor-cancel-fn context transaction)
-        save-fn        (events/editor-save-fn form)
-        editor-context (assoc context
-                              :accounts  accounts
-                              :payees    payees
-                              :form      form
-                              :cancel-fn cancel-fn
-                              :save-fn   save-fn)]
+  (let [accounts        (subscribe [:accounts])
+        payees          (subscribe [:payees])
+        queries         (subscribe [:queries])
+        splits          (:splits transaction)
+        main-split      (ctx/main-split context transaction)
+        other-splits    (ctx/other-splits context transaction)
+        form            (reagent/atom {:transaction   transaction
+                                       :main-split    main-split
+                                       ; For some reason, this doesn't work unless
+                                       ; it's a vector. I would guess it's because
+                                       ; (get-in (list 1) [0]) => nil
+                                       :other-splits  (vec other-splits)
+                                       :pending-query nil
+                                       :msg           {}})
+        cancel-fn       (events/editor-cancel-fn context transaction)
+        save-fn         (events/editor-save-fn form)
+        editor-context  (assoc context
+                               :accounts  accounts
+                               :payees    payees
+                               :form      form
+                               :cancel-fn cancel-fn
+                               :save-fn   save-fn)
+
+        splits-cols     (splits-columns columns)
+        non-splits-cols (non-splits-columns columns)
+        ]
     (fn
       [& _] ; normally you should match the arguments to the parent-level fn,
             ; but here we intentionally want the variables from the parent
@@ -282,13 +298,13 @@
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel-fn %))}
          [:div.row
-          (create-editors editor-context (non-splits-columns columns) [])
-          (create-editors editor-context (splits-columns columns) [:main-split])]
+          (create-editors editor-context non-splits-cols [])
+          (create-editors editor-context splits-cols [:main-split])]
          (doall (for [i (range (count other-splits))]
                   ^{:key i}
                   [:div.row
-                   [:div.col-sm-4]
-                   (create-editors editor-context (splits-columns columns) [:other-splits i])]))
+                   [:div {:class (str "col-sm-" (- 12 (total-normal-width splits-cols)))}]
+                   (create-editors editor-context splits-cols [:other-splits i])]))
          [editor-toolbar editor-context :show-spinner? pending-query]]))))
 
 ; ----------------------------------------------------------------------------

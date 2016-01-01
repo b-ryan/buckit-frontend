@@ -198,13 +198,28 @@
                          :on-change (ui/input-change-fn form path)))))
 
 (defn- split-editor
-  [context columns split-path]
+  [editor-context columns split-path]
   (doall (for [column (splits-columns columns)]
-           (with-meta
-             (property-editor context column split-path)
-             {:key (:name column)}))))
+           (with-meta (property-editor editor-context column split-path)
+                      {:key (:name column)}))))
 
-(defn editor-row
+(defn- editor-toolbar
+  [{:keys [form pending-query cancel-fn save-fn]}]
+  [:div.row
+   [:div.col-sm-8
+    [:p.text-danger (:error @form)]]
+   [:div.col-sm-4
+    [:div.btn-toolbar.pull-right
+     [:button.btn.btn-danger.btn-xs {:type "button" :on-click cancel-fn} "Cancel"]
+     [:button.btn.btn-success.btn-xs.has-spinnner
+      {:type "submit" :on-click save-fn
+       :class (when pending-query "show-spinner")
+       :disabled pending-query}
+      (if pending-query
+        [:span.buckit--btn-spinner.glyphicon.glyphicon-refresh]
+        "Save")]]]])
+
+(defn- editor-row
   "An editor for modifying and creating transactions. NOTE: You should not
   set this editor up in such a way that it will persist as the transaction or
   options change. As an example, it would not be good to have a static editor
@@ -228,14 +243,17 @@
     (fn
       [context transaction columns]
       {:pre [(some? main-split)]}
-      (let [pending-query (:pending-query @form)
-            query-result  (when pending-query (get @queries pending-query))
-            context       (assoc context
-                                 :accounts accounts
-                                 :payees   payees
-                                 :form     form)
-            cancel        (events/editor-cancel-fn context transaction)
-            save          (events/editor-save-fn context)]
+      (let [pending-query      (:pending-query @form)
+            query-result       (when pending-query (get @queries pending-query))
+            cancel-fn          (events/editor-cancel-fn context transaction)
+            save-fn            (events/editor-save-fn form)
+            editor-context     (assoc context
+                                      :accounts      accounts
+                                      :payees        payees
+                                      :form          form
+                                      :pending-query pending-query
+                                      :cancel-fn     cancel-fn
+                                      :save-fn       save-fn)]
         (when (and pending-query (db.query/successful? query-result))
           (js/setTimeout (fn [] (swap! form assoc :pending-query nil))))
         (when (and pending-query (db.query/failed? query-result))
@@ -243,33 +261,18 @@
                                        :pending-query nil
                                        :error         i18n/generic-save-error))))
         [:form.buckit--transaction-editor
-         {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel %))}
+         {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel-fn %))}
          [:div.row
           (doall (for [column (non-splits-columns columns)]
-                   (with-meta
-                     (property-editor context column)
-                     {:key (:name column)})))
-          (split-editor context columns [:main-split])]
-         (doall
-           (for [i (range (count other-splits))]
-             ^{:key i}
-             [:div.row
-              [:div.col-sm-4]
-              (split-editor context columns [:other-splits i])]))
-         [:div.row
-          [:div.col-sm-8
-           [:p.text-danger (:error @form)]]
-          [:div.col-sm-4
-           [:div.btn-toolbar.pull-right
-            [:button.btn.btn-danger.btn-xs
-             {:type "button" :on-click cancel} "Cancel"]
-            [:button.btn.btn-success.btn-xs.has-spinnner
-             {:type "submit" :on-click save
-              :class (when pending-query "show-spinner")
-              :disabled pending-query}
-             (if pending-query
-               [:span.buckit--btn-spinner.glyphicon.glyphicon-refresh]
-               "Save")]]]]]))))
+                   (with-meta (property-editor editor-context column)
+                              {:key (:name column)})))
+          (split-editor editor-context columns [:main-split])]
+         (doall (for [i (range (count other-splits))]
+                  ^{:key i}
+                  [:div.row
+                   [:div.col-sm-4]
+                   (split-editor editor-context columns [:other-splits i])]))
+         [editor-toolbar editor-context]]))))
 
 ; ----------------------------------------------------------------------------
 ;     LEDGER

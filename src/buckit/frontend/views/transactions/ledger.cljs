@@ -16,6 +16,7 @@
             [reagent.core                               :as reagent]))
 
 (defn get-columns
+  ; FIXME alter for :no-account mode
   [context]
   "All columns where :is-split-property? is true should be to the right."
   [{:name               "Date"
@@ -24,7 +25,7 @@
     :is-split-property? false}
    {:name               "Account"
     :width-on-mobile    0
-    :width-normal       0
+    :width-normal       2
     :is-split-property? false} ; hmmmmm
    {:name               "Payee"
     :width-on-mobile    0
@@ -32,11 +33,11 @@
     :is-split-property? false}
    {:name               "Category"
     :width-on-mobile    4
-    :width-normal       3
+    :width-normal       2
     :is-split-property? true}
    {:name               "Memo"
     :width-on-mobile    0
-    :width-normal       3
+    :width-normal       2
     :is-split-property? true}
    {:name               "Amount"
     :width-on-mobile    4
@@ -96,16 +97,16 @@
   [{:keys [accounts] :as context} transaction _]
   (->> transaction
        (ctx/main-split context)
-       models.split/account-id
+       (models.split/account-id)
        (get @accounts)
-       models.account/name))
+       (models.account/name)))
 
 (defmethod property-display "Payee"
   [{:keys [payees]} transaction _]
   (->> transaction
-       models.transaction/payee-id
+       (models.transaction/payee-id)
        (get @payees)
-       models.payee/name))
+       (models.payee/name)))
 
 (defmethod property-display "Category"
   [{:keys [accounts] :as context} transaction _]
@@ -113,10 +114,10 @@
     (if (> (count other-splits) 1)
       "Splits"
       (->> other-splits
-           first
-           models.split/account-id
+           (first)
+           (models.split/account-id)
            (get @accounts)
-           models.account/name))))
+           (models.account/name)))))
 
 (defmethod property-display "Memo"
   ; FIXME
@@ -322,11 +323,11 @@
       (js/console.log "in ledger, context:" (clj->js context))
       (let [query            (ctx/transactions-query context)
             query-result     (get @queries (:query-id query))
+            ; TODO below could be more efficient using subscriptions or reactions
             transactions     (->> @transactions
                                   (vals)
                                   (ctx/filter-transactions context)
                                   (sort-by models.transaction/date))
-            ; FIXME alter for :no-account mode
             columns          (get-columns context)]
         (cond
           ; -----------------------------------------------------------------

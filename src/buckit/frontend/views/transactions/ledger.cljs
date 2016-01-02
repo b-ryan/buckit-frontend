@@ -161,19 +161,15 @@
 ; ----------------------------------------------------------------------------
 ;     EDITOR
 ; ----------------------------------------------------------------------------
-(defn- input
-  [& options]
-  [:input.form-control.input-sm (apply hash-map options)])
-
 (defmulti property-editor (fn [_ column] (:name column)))
 
 (defmethod property-editor "Date"
   [{:keys [form]} _]
   (let [path [:transaction models.transaction/date]]
     [ui/initial-focus-wrapper
-     (input :type "text" :placeholder "Date"
-            :value (get-in @form path)
-            :on-change (ui/input-change-fn form path))]))
+     [:input.form-control.input-sm {:type "text" :placeholder "Date"
+                                    :value (get-in @form path)
+                                    :on-change (ui/input-change-fn form path)}]]))
 
 (defmethod property-editor "Account"
   [{:keys [form accounts]} _]
@@ -190,37 +186,33 @@
      (into (list ^{:key :empty} [:option])
            (for [[payee-id payee] @payees]
              ^{:key payee-id}
-             [:option
-              {:key payee-id :visible? (constantly true)}
-              (models.payee/name payee)]))]))
+             [:option {:key payee-id :value payee-id} (models.payee/name payee)]))]))
 
 (defmethod property-editor "Category"
   [{:keys [form accounts]} _ split-path]
   (let [path (conj split-path models.split/account-id)]
     [:select.form-control.input-sm
      {:type "text"
-      :value (get-in @form split-path)
-      :on-change (ui/input-change-fn form split-path)}
+      :value (get-in @form path)
+      :on-change (ui/input-change-fn form path)}
      (into (list ^{:key :empty} [:option])
            (for [[account-id account] @accounts]
              ^{:key account-id}
-             [:option
-              {:key account-id :visible? (constantly true)}
-              (models.account/name account)]))]))
+             [:option {:key account-id :value account-id} (models.account/name account)]))]))
 
 (defmethod property-editor "Memo"
   [{:keys [form]} _ split-path]
   (let [path (conj split-path models.split/memo)]
-    (input :type "number" :placeholder "Memo"
-           :value (get-in @form path)
-           :on-change (ui/input-change-fn form path))))
+    [:input.form-control.input-sm {:type "text" :placeholder "Memo"
+                                   :value (get-in @form path)
+                                   :on-change (ui/input-change-fn form path)}]))
 
 (defmethod property-editor "Amount"
   [{:keys [form]} _ split-path]
   (let [path (conj split-path models.split/amount)]
-    (input :type "number" :placeholder "Amount"
-           :value (get-in @form path)
-           :on-change (ui/input-change-fn form path))))
+    [:input.form-control.input-sm {:type "number" :placeholder "Amount"
+                                   :value (get-in @form path)
+                                   :on-change (ui/input-change-fn form path)}]))
 
 (defn- create-editors
   [editor-context columns root-path]
@@ -286,6 +278,7 @@
       (let [pending-query (:pending-query @form)
             query-result  (when pending-query (get @queries pending-query))]
 
+        ; FIXME move to another fn
         (when (and pending-query (db.query/complete? query-result))
           (js/setTimeout (fn [] (swap! form assoc
                                        :pending-query nil

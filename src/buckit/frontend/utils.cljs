@@ -14,9 +14,11 @@
   (into {} (filter (fn [[k v]] (f v)) m)))
 
 (defn spy
-  [x]
-  (js/console.log "spy results:" (clj->js x))
-  x)
+  ([x]
+   (spy "?" x))
+  ([desc x]
+   (js/console.log (str "spy results [" desc "] : ") (clj->js x))
+   x))
 
 (defn nil-or-?
   [x what?]

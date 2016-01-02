@@ -56,10 +56,17 @@
                     :edit       :edit?})
       (select-keys #{:account-id :selected-transaction-id :edit?})))
 
-(defn new-transaction
-  ; FIXME doesn't work for :no-account mode
+; ----------------------------------------------------------------------------
+(defmulti new-transaction mode)
+
+(defmethod new-transaction :no-account
+  [_]
+  (models.transaction/create))
+
+(defmethod new-transaction :single-account
   [context]
   (models.transaction/create (:account-id context)))
+
 ; ----------------------------------------------------------------------------
 (defmulti transactions-query mode)
 

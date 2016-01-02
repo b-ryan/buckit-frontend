@@ -322,7 +322,10 @@
       (js/console.log "in ledger, context:" (clj->js context))
       (let [query            (ctx/transactions-query context)
             query-result     (get @queries (:query-id query))
-            transactions     (ctx/filter-transactions context (vals @transactions))
+            transactions     (->> @transactions
+                                  (vals)
+                                  (ctx/filter-transactions context)
+                                  (sort-by models.transaction/date))
             ; FIXME alter for :no-account mode
             columns          (get-columns context)]
         (cond

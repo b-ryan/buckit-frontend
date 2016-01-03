@@ -15,36 +15,6 @@
             [re-frame.core                              :refer [dispatch subscribe]]
             [reagent.core                               :as reagent]))
 
-(defn get-columns
-  ; FIXME alter for :no-account mode
-  [context]
-  "All columns where :is-split-property? is true should be to the right."
-  (let [show-account? (ctx/show-account-column? context)]
-    [{:name               "Date"
-      :width-on-mobile    4
-      :width-normal       2
-      :is-split-property? false}
-     {:name               "Account"
-      :width-on-mobile    0
-      :width-normal       (if show-account? 2 0)
-      :is-split-property? false}
-     {:name               "Payee"
-      :width-on-mobile    0
-      :width-normal       2
-      :is-split-property? false}
-     {:name               "Category"
-      :width-on-mobile    4
-      :width-normal       (if show-account? 2 3)
-      :is-split-property? true}
-     {:name               "Memo"
-      :width-on-mobile    0
-      :width-normal       (if show-account? 2 3)
-      :is-split-property? true}
-     {:name               "Amount"
-      :width-on-mobile    4
-      :width-normal       2
-      :is-split-property? true}]))
-
 (defn- non-splits-columns
   [columns]
   (remove :is-split-property? columns))
@@ -309,7 +279,7 @@
                                   (vals)
                                   (ctx/filter-transactions context)
                                   (sort-by models.transaction/date))
-            columns          (get-columns context)]
+            columns          (ctx/get-columns context)]
         (cond
           ; -----------------------------------------------------------------
           ; NO QUERY

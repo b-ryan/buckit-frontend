@@ -16,6 +16,9 @@
             [buckit.frontend.models.split       :as models.split]
             [buckit.frontend.models.transaction :as models.transaction]
             [buckit.frontend.utils              :as utils]
+            [cljs-time.coerce                   :as time.coerce]
+            [cljs-time.core                     :as time.core]
+            [cljs-time.format                   :as time.fmt]
             [clojure.set                        :refer [rename-keys]]))
 
 (defn valid?
@@ -57,15 +60,39 @@
       (select-keys #{:account-id :selected-transaction-id :edit?})))
 
 ; ----------------------------------------------------------------------------
+(defn- create-split
+  "Creates a new split. If an account ID is given, it will be used. Otherwise
+  the account ID will be nil. The amount will be 0."
+  [to-merge]
+  (merge {models.split/id             nil
+          models.split/account-id     nil
+          models.split/amount         0
+          models.split/primary-split? false}
+         to-merge))
+
+(defn- create-transaction
+  "Creates a transaction with 2 splits. If an account ID is provided, it will
+  be used as the account ID of the first split. The date will be today."
+  [& [account-id]]
+  {models.transaction/id          nil
+   ;TODO do not format the date, just pass it along.
+   ; consider using built-in :year-month-day formatter
+   models.transaction/date        (time.fmt/unparse (time.fmt/formatter "yyyy-MM-dd")
+                                                    (time.coerce/to-date-time (time.core/today)))
+   models.transaction/payee-id    nil
+   models.transaction/splits      [(create-split {models.split/account-id     account-id
+                                                  models.split/primary-split? true})
+                                   (create-split {})]})
+
 (defmulti new-transaction mode)
 
 (defmethod new-transaction :no-account
   [_]
-  (models.transaction/create))
+  (create-transaction))
 
 (defmethod new-transaction :single-account
   [context]
-  (models.transaction/create (:account-id context)))
+  (create-transaction (:account-id context)))
 
 ; ----------------------------------------------------------------------------
 (defmulti transactions-query mode)
@@ -107,17 +134,11 @@
 
 (defmethod main-split :default
   [_ transaction]
-  (first (models.transaction/splits transaction)))
+  (let [splits (models.transaction/splits transaction)]
+    (first (or (seq (filter models.split/primary-split? splits))
+               splits))))
 
-; ----------------------------------------------------------------------------
-(defmulti other-splits mode)
-
-(defmethod other-splits :single-account
+(defn other-splits
   [context transaction]
-  (models.split/splits-for-other-accounts
-    (models.transaction/splits transaction)
-    (:account-id context)))
-
-(defmethod other-splits :default
-  [_ transaction]
-  (rest (models.transaction/splits transaction)))
+  (remove #(= % (main-split context transaction))
+          (models.transaction/splits transaction)))

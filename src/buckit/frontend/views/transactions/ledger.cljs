@@ -165,7 +165,7 @@
 (defmulti property-editor (fn [_ column] (:name column)))
 
 (defmethod property-editor "Date"
-  [{:keys [form]} _]
+  [form _]
   (let [path [:transaction models.transaction/date]]
     [ui/initial-focus-wrapper
      [:input.form-control.input-sm {:type "text" :placeholder "Date"
@@ -173,42 +173,42 @@
                                     :on-change (ui/input-change-fn form path)}]]))
 
 (defmethod property-editor "Account"
-  [{:keys [form accounts]} _]
+  [form _]
   ; FIXME
   [ui/account-selector form [:main-split models.split/account-id]])
 
 (defmethod property-editor "Payee"
-  [{:keys [form payees]} _]
+  [form _]
   [ui/payee-selector form [:transaction models.transaction/payee-id]])
 
 (defmethod property-editor "Category"
-  [{:keys [form accounts]} _ split-path]
+  [form _ split-path]
   [ui/account-selector form (conj split-path models.split/account-id)])
 
 (defmethod property-editor "Memo"
-  [{:keys [form]} _ split-path]
+  [form _ split-path]
   (let [path (conj split-path models.split/memo)]
     [:input.form-control.input-sm {:type "text" :placeholder "Memo"
                                    :value (get-in @form path)
                                    :on-change (ui/input-change-fn form path)}]))
 
 (defmethod property-editor "Amount"
-  [{:keys [form]} _ split-path]
+  [form _ split-path]
   (let [path (conj split-path models.split/amount)]
     [:input.form-control.input-sm {:type "number" :placeholder "Amount"
                                    :value (get-in @form path)
                                    :on-change (ui/input-change-fn form path)}]))
 
 (defn- create-editors
-  [editor-context columns root-path]
+  [form columns root-path]
   (doall (for [column columns]
            ^{:key (:name column)}
            [:div.buckit--ledger-editor-input
             {:class (column-class column)}
-            (property-editor editor-context column root-path)])))
+            (property-editor form column root-path)])))
 
 (defn- editor-toolbar
-  [{:keys [form cancel-fn save-fn]} & {:keys [show-spinner?]}]
+  [{:keys [form cancel-fn save-fn show-spinner?]}]
   [:div.row
    (let [msg (:msg @form)]
      [:div.col-sm-8 [:p {:class (:class msg)} (:text msg)]])
@@ -246,16 +246,9 @@
                                        :msg           {}})
         cancel-fn       (events/editor-cancel-fn context transaction)
         save-fn         (events/editor-save-fn form)
-        editor-context  (assoc context
-                               :accounts  accounts
-                               :payees    payees
-                               :form      form
-                               :cancel-fn cancel-fn
-                               :save-fn   save-fn)
 
         splits-cols     (splits-columns columns)
-        non-splits-cols (non-splits-columns columns)
-        ]
+        non-splits-cols (non-splits-columns columns)]
     (fn
       [& _] ; normally you should match the arguments to the parent-level fn,
             ; but here we intentionally want the variables from the parent
@@ -276,14 +269,17 @@
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel-fn %))}
          [:div.row
-          (create-editors editor-context non-splits-cols [])
-          (create-editors editor-context splits-cols [:main-split])]
+          (create-editors form non-splits-cols [])
+          (create-editors form splits-cols [:main-split])]
          (doall (for [i (range (count other-splits))]
                   ^{:key i}
                   [:div.row
                    [:div {:class (str "col-sm-" (- 12 (total-normal-width splits-cols)))}]
-                   (create-editors editor-context splits-cols [:other-splits i])]))
-         [editor-toolbar editor-context :show-spinner? pending-query]]))))
+                   (create-editors form splits-cols [:other-splits i])]))
+         [editor-toolbar {:form          form
+                          :cancel-fn     cancel-fn
+                          :save-fn       save-fn
+                          :show-spinner? pending-query}]]))))
 
 ; ----------------------------------------------------------------------------
 ;     LEDGER

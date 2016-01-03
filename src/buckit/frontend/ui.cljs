@@ -15,6 +15,11 @@
     (swap! form assoc-in path (-> e .-target .-value))))
 
 ; TODO the below should maybe be in a different namespace
+(defn date-selector
+  [form path]
+  [:input.form-control.input-sm {:type "text" :placeholder "Date"
+                                 :value (get-in @form path)
+                                 :on-change (input-change-fn form path)}])
 
 (defn account-selector
   [form path]

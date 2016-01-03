@@ -137,11 +137,8 @@
 
 (defmethod property-editor "Date"
   [form _]
-  (let [path [:transaction models.transaction/date]]
-    [ui/initial-focus-wrapper
-     [:input.form-control.input-sm {:type "text" :placeholder "Date"
-                                    :value (get-in @form path)
-                                    :on-change (ui/input-change-fn form path)}]]))
+  [ui/initial-focus-wrapper
+   [ui/date-selector form [:transaction models.transaction/date]]])
 
 (defmethod property-editor "Account"
   [form _]

@@ -38,6 +38,7 @@
       :else             :single-account)))
 
 (defn is-selected?
+  "Returns true if the given transaction is the one that should be selected."
   [context transaction]
   (= (:selected-transaction-id context)
      (models.transaction/id transaction)))
@@ -58,6 +59,12 @@
                     :id         :selected-transaction-id
                     :edit       :edit?})
       (select-keys #{:account-id :selected-transaction-id :edit?})))
+
+(defn show-account-column?
+  "Returns true if the column for showing/editing the account of the main split
+  should be shown."
+  [context]
+  (not= (mode context) :single-account))
 
 ; ----------------------------------------------------------------------------
 (defn- create-split

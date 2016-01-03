@@ -175,31 +175,15 @@
 (defmethod property-editor "Account"
   [{:keys [form accounts]} _]
   ; FIXME
-  [:p "hi"])
+  [ui/account-selector form [:main-split models.split/account-id]])
 
 (defmethod property-editor "Payee"
   [{:keys [form payees]} _]
-  (let [path [:transaction models.transaction/payee-id]]
-    [:select.form-control.input-sm
-     {:type "text"
-      :value (get-in @form path)
-      :on-change (ui/input-change-fn form path)}
-     (into (list ^{:key :empty} [:option])
-           (for [[payee-id payee] @payees]
-             ^{:key payee-id}
-             [:option {:key payee-id :value payee-id} (models.payee/name payee)]))]))
+  [ui/payee-selector form [:transaction models.transaction/payee-id]])
 
 (defmethod property-editor "Category"
   [{:keys [form accounts]} _ split-path]
-  (let [path (conj split-path models.split/account-id)]
-    [:select.form-control.input-sm
-     {:type "text"
-      :value (get-in @form path)
-      :on-change (ui/input-change-fn form path)}
-     (into (list ^{:key :empty} [:option])
-           (for [[account-id account] @accounts]
-             ^{:key account-id}
-             [:option {:key account-id :value account-id} (models.account/name account)]))]))
+  [ui/account-selector form (conj split-path models.split/account-id)])
 
 (defmethod property-editor "Memo"
   [{:keys [form]} _ split-path]

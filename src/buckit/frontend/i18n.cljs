@@ -1,5 +1,9 @@
 (ns buckit.frontend.i18n)
 
+(def accounts-title     "Accounts")
+(def budget-title       "Budget")
+(def transactions-title "Transactions")
+
 ; TODO make legit
 
 (def init-error-message

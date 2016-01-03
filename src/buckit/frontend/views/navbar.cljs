@@ -1,14 +1,15 @@
 (ns buckit.frontend.views.navbar
-  (:require [buckit.frontend.routes :as routes]
+  (:require [buckit.frontend.i18n   :as i18n]
+            [buckit.frontend.routes :as routes]
             [re-frame.core          :refer [subscribe]]))
 
-(def ^:private sections [{:name "Transactions"
+(def ^:private sections [{:name i18n/transactions-title
                           :href (routes/transactions-url)
                           :matches #{routes/transactions}}
-                         {:name "Accounts"
+                         {:name i18n/accounts-title
                           :href (routes/accounts-url)
                           :matches #{routes/accounts routes/account-details}}
-                         {:name "Budget"
+                         {:name i18n/budget-title
                           :href (routes/budget-url)
                           :matches #{routes/budget}}])
 

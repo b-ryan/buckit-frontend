@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "bower": "~1.4.1",
+    "bower": "~1.6.8",
     "slimerjs": "~0.9.5"
   }
 }

@@ -16,19 +16,23 @@
 
 ; TODO the below should maybe be in a different namespace
 (defn date-selector
-  [form path]
-  [:input.form-control.input-sm {:type "text" :placeholder "Date"
-                                 :value (get-in @form path)
-                                 :on-change (input-change-fn form path)}])
+  [{:keys [class form path]}]
+  [:input
+   {:class       class
+    :type        "text"
+    :placeholder "Date"
+    :value       (get-in @form path)
+    :on-change   (input-change-fn form path)}])
 
 (defn account-selector
   [form path]
   (let [accounts (subscribe [:accounts])]
     (fn
       []
-      [:select.form-control.input-sm
-       {:type "text"
-        :value (get-in @form path)
+      [:select
+       {:class     "form-control input-sm"
+        :type      "text"
+        :value     (get-in @form path)
         :on-change (input-change-fn form path)}
        (into (list ^{:key :empty} [:option])
              (for [[account-id account] @accounts]
@@ -40,9 +44,10 @@
   (let [payees (subscribe [:payees])]
     (fn
       [form path]
-      [:select.form-control.input-sm
-       {:type "text"
-        :value (get-in @form path)
+      [:select
+       {:class     "form-control input-sm"
+        :type      "text"
+        :value     (get-in @form path)
         :on-change (input-change-fn form path)}
        (into (list ^{:key :empty} [:option])
              (for [[payee-id payee] @payees]

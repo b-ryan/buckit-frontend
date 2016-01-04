@@ -49,11 +49,10 @@
 
 (defn- header
   [columns]
-  [:div.container-fluid
-   [:div.row.buckit--ledger-header
-    (for [column columns]
-      ^{:key (:name column)}
-      [:span {:class (column-class column)} (:name column)])]])
+  [:div.row.buckit--ledger-header
+   (for [column columns]
+     ^{:key (:name column)}
+     [:span {:class (column-class column)} (:name column)])])
 
 ; ----------------------------------------------------------------------------
 ;     READ ONLY
@@ -138,7 +137,9 @@
 (defmethod property-editor "Date"
   [form _]
   [ui/initial-focus-wrapper
-   [ui/date-selector form [:transaction models.transaction/date]]])
+   [ui/date-selector {:class "form-control input-sm"
+                      :form  form
+                      :path  [:transaction models.transaction/date]}]])
 
 (defmethod property-editor "Account"
   [form _]
@@ -168,7 +169,8 @@
                                    :on-change (ui/input-change-fn form path)}]))
 
 (defn- create-editors
-  [form columns root-path]
+  [{:keys [form columns root-path]
+    :or   {root-path []}}]
   (doall (for [column columns]
            ^{:key (:name column)}
            [:div.buckit--ledger-editor-input
@@ -178,8 +180,8 @@
 (defn- editor-toolbar
   [{:keys [form cancel-fn save-fn show-spinner?]}]
   [:div.row
-   (let [msg (:msg @form)]
-     [:div.col-sm-8 [:p {:class (:class msg)} (:text msg)]])
+   [:div.col-sm-8 (let [msg (:msg @form)]
+                    [:p {:class (:class msg)} (:text msg)])]
    [:div.col-sm-4
     [:div.btn-toolbar.pull-right
      [:button.btn.btn-danger.btn-xs {:type "button" :on-click cancel-fn} "Cancel"]
@@ -237,13 +239,14 @@
         [:form.buckit--transaction-editor
          {:on-key-down #(when (= (.-which %) keyboard/escape) (cancel-fn %))}
          [:div.row
-          (create-editors form non-splits-cols [])
-          (create-editors form splits-cols [:main-split])]
+          (create-editors {:form form :columns non-splits-cols})
+          (create-editors {:form form :columns splits-cols :root-path [:main-split]})]
          (doall (for [i (range (count other-splits))]
                   ^{:key i}
                   [:div.row
                    [:div {:class (str "col-sm-" (- 12 (total-normal-width splits-cols)))}]
-                   (create-editors form splits-cols [:other-splits i])]))
+                   (create-editors {:form form :columns splits-cols
+                                    :root-path [:other-splits i]})]))
          [editor-toolbar {:form          form
                           :cancel-fn     cancel-fn
                           :save-fn       save-fn
@@ -253,9 +256,11 @@
 ;     LEDGER
 ; ----------------------------------------------------------------------------
 (defn- ledger-row
-  [context transaction columns]
-  (let [is-selected? (ctx/is-selected? context transaction)]
-    [:div.container-fluid.buckit--ledger-row
+  [{:keys [context transaction columns new-transaction?]
+    :or   {transaction (ctx/new-transaction context)}}]
+  (let [is-selected? (or new-transaction?
+                         (ctx/is-selected? context transaction))]
+    [:div.buckit--ledger-row
      {:class (when is-selected? "active")}
      (if (and is-selected? (:edit? context))
        [editor-row context transaction columns]
@@ -303,7 +308,10 @@
            (doall
              (for [transaction transactions]
                ^{:key (models.transaction/id transaction)}
-               [ledger-row context transaction columns]))
+               [ledger-row {:context     context
+                            :transaction transaction
+                            :columns     columns}]))
            (when (and (not selected-transaction-id) (:edit? context))
-             [:div.container-fluid.buckit--ledger-row.active
-              [editor-row context (ctx/new-transaction context) columns]])])))))
+             [ledger-row {:context          context
+                          :columns          columns
+                          :new-transaction? true}])])))))

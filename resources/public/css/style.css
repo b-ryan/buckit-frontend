@@ -24,6 +24,7 @@ body {
     .buckit--navbar .navbar-nav {
         /* Bootstrap gives a -15 margin on left/right for the navbar on small
          * screens. Override so the nav isn't way up against the edge
+         * FIXME this might be because there is not container
          */
         margin-left: 0;
         margin-right: 0;
@@ -93,6 +94,16 @@ body {
 
 .buckit--ledger-row {
     border-top: 1px solid #eee;
+
+    /*
+     * Because the buckit--ledger-row is not in the grid system, it normally
+     * does not cover the entire row. The -15px margin and 15px padding cause
+     * this row to behave like a row.
+     */
+    margin-left: -15px;
+    margin-right: -15px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .buckit--ledger-row.active {

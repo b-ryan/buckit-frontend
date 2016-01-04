@@ -12,6 +12,6 @@
 
 (defn transactions
   [context]
-  [:div.container-fluid.buckit--transactions-view
-   [:div.row [toolbar context]]
-   [:div.row [ledger/ledger context]]])
+  [:div.buckit--transactions-view
+   [toolbar context]
+   [ledger/ledger context]])

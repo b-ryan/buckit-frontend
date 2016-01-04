@@ -66,36 +66,42 @@
   [context]
   (not= (mode context) :single-account))
 
+(defn- hidden-column?
+  [column]
+  (and (zero? (:width-on-mobile column))
+       (zero? (:width-normal column))))
+
 (defn get-columns
   "Returns a vector of column objects that determine what to show in the
   ledger and how wide they should be."
   [context]
   ; All columns where :is-split-property? is true should be to the right.
   (let [show-account? (show-account-column? context)]
-    [{:name               "Date"
-      :width-on-mobile    4
-      :width-normal       2
-      :is-split-property? false}
-     {:name               "Account"
-      :width-on-mobile    0
-      :width-normal       (if show-account? 2 0)
-      :is-split-property? false}
-     {:name               "Payee"
-      :width-on-mobile    0
-      :width-normal       2
-      :is-split-property? false}
-     {:name               "Category"
-      :width-on-mobile    4
-      :width-normal       (if show-account? 2 3)
-      :is-split-property? true}
-     {:name               "Memo"
-      :width-on-mobile    0
-      :width-normal       (if show-account? 2 3)
-      :is-split-property? true}
-     {:name               "Amount"
-      :width-on-mobile    4
-      :width-normal       2
-      :is-split-property? true}]))
+    (remove hidden-column?
+            [{:name               "Date"
+              :width-on-mobile    4
+              :width-normal       2
+              :is-split-property? false}
+             {:name               "Account"
+              :width-on-mobile    0
+              :width-normal       (if show-account? 2 0)
+              :is-split-property? false}
+             {:name               "Payee"
+              :width-on-mobile    0
+              :width-normal       2
+              :is-split-property? false}
+             {:name               "Category"
+              :width-on-mobile    4
+              :width-normal       (if show-account? 2 3)
+              :is-split-property? true}
+             {:name               "Memo"
+              :width-on-mobile    0
+              :width-normal       (if show-account? 2 3)
+              :is-split-property? true}
+             {:name               "Amount"
+              :width-on-mobile    4
+              :width-normal       2
+              :is-split-property? true}])))
 
 ; ----------------------------------------------------------------------------
 (defn- create-split

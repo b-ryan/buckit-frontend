@@ -163,18 +163,20 @@
 (defmethod property-editor "Memo"
   [form _ split-path]
   (let [path (conj split-path models.split/memo)]
-    [:input.form-control.input-sm {:type        "text"
-                                   :placeholder "Memo"
-                                   :value       (get-in @form path)
-                                   :on-change   (ui/input-change-fn form path)}]))
+    [:input {:class       "form-control input-sm"
+             :type        "text"
+             :placeholder "Memo"
+             :value       (get-in @form path)
+             :on-change   (ui/input-change-fn form path)}]))
 
 (defmethod property-editor "Amount"
   [form _ split-path]
   (let [path (conj split-path models.split/amount)]
-    [:input.form-control.input-sm {:type        "number"
-                                   :placeholder "Amount"
-                                   :value       (get-in @form path)
-                                   :on-change   (ui/input-change-fn form path)}]))
+    [:input {:class       "form-control input-sm"
+             :type        "number"
+             :placeholder "Amount"
+             :value       (get-in @form path)
+             :on-change   (ui/input-change-fn form path)}]))
 
 (defn- create-editors
   [{:keys [form columns root-path]

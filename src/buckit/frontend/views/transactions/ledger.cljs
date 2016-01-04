@@ -144,29 +144,37 @@
 (defmethod property-editor "Account"
   [form _]
   ; FIXME
-  [ui/account-selector form [:main-split models.split/account-id]])
+  [ui/account-selector {:class "form-control input-sm"
+                        :form  form
+                        :path  [:main-split models.split/account-id]}])
 
 (defmethod property-editor "Payee"
   [form _]
-  [ui/payee-selector form [:transaction models.transaction/payee-id]])
+  [ui/payee-selector {:class "form-control input-sm"
+                      :form  form
+                      :path  [:transaction models.transaction/payee-id]}])
 
 (defmethod property-editor "Category"
   [form _ split-path]
-  [ui/account-selector form (conj split-path models.split/account-id)])
+  [ui/account-selector {:class "form-control input-sm"
+                        :form  form
+                        :path  (conj split-path models.split/account-id)}])
 
 (defmethod property-editor "Memo"
   [form _ split-path]
   (let [path (conj split-path models.split/memo)]
-    [:input.form-control.input-sm {:type "text" :placeholder "Memo"
-                                   :value (get-in @form path)
-                                   :on-change (ui/input-change-fn form path)}]))
+    [:input.form-control.input-sm {:type        "text"
+                                   :placeholder "Memo"
+                                   :value       (get-in @form path)
+                                   :on-change   (ui/input-change-fn form path)}]))
 
 (defmethod property-editor "Amount"
   [form _ split-path]
   (let [path (conj split-path models.split/amount)]
-    [:input.form-control.input-sm {:type "number" :placeholder "Amount"
-                                   :value (get-in @form path)
-                                   :on-change (ui/input-change-fn form path)}]))
+    [:input.form-control.input-sm {:type        "number"
+                                   :placeholder "Amount"
+                                   :value       (get-in @form path)
+                                   :on-change   (ui/input-change-fn form path)}]))
 
 (defn- create-editors
   [{:keys [form columns root-path]

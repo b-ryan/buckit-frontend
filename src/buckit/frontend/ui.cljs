@@ -25,12 +25,12 @@
     :on-change   (input-change-fn form path)}])
 
 (defn account-selector
-  [form path]
+  [opts]
   (let [accounts (subscribe [:accounts])]
     (fn
-      []
+      [{:keys [class form path]}]
       [:select
-       {:class     "form-control input-sm"
+       {:class     class
         :type      "text"
         :value     (get-in @form path)
         :on-change (input-change-fn form path)}
@@ -40,12 +40,12 @@
                [:option {:key account-id :value account-id} (models.account/name account)]))])))
 
 (defn payee-selector
-  [form path]
+  [opts]
   (let [payees (subscribe [:payees])]
     (fn
-      [form path]
+      [{:keys [class form path]}]
       [:select
-       {:class     "form-control input-sm"
+       {:class     class
         :type      "text"
         :value     (get-in @form path)
         :on-change (input-change-fn form path)}

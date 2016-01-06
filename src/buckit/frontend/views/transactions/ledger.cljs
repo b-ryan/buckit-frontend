@@ -42,17 +42,21 @@
     (str "hidden-" size)))
 
 (defn- column-class
-  [column]
-  (str (col-width->class (:width-on-mobile column) "xs")
+  [mobile-width normal-width]
+  (str (col-width->class mobile-width "xs")
        " "
-       (col-width->class (:width-normal column) "sm")))
+       (col-width->class normal-width "sm")))
+
+(def max-column-width 12)
 
 (defn- header
   [columns]
   [:div.row.buckit--ledger-header
    (for [column columns]
      ^{:key (:name column)}
-     [:span {:class (column-class column)} (:name column)])])
+     [:span {:class (column-class (:width-on-mobile column)
+                                  (:width-normal column))}
+      (:name column)])])
 
 ; ----------------------------------------------------------------------------
 ;     READ ONLY
@@ -126,65 +130,78 @@
          (doall (for [column columns]
                   ^{:key (:name column)}
                   [:span
-                   {:class (column-class column)}
+                   {:class (column-class (:width-on-mobile column)
+                                         (:width-normal column))}
                    (property-display context transaction column)]))]))))
 
 ; ----------------------------------------------------------------------------
 ;     EDITOR
 ; ----------------------------------------------------------------------------
+(defn editor-wrapper
+  [{:keys [label-for label]} content]
+  [:div.row.form-group
+   [:label.col-xs-4.visible-xs-block {:for label-for} label]
+   [:div.col-xs-8.col-sm-12 content]])
+
 (defmulti property-editor (fn [_ column] (:name column)))
 
 (defmethod property-editor "Date"
   [form _]
-  [ui/initial-focus-wrapper
-   [ui/date-selector {:class "form-control input-sm"
-                      :form  form
-                      :path  [:transaction models.transaction/date]}]])
+  [editor-wrapper {:label-for "transaction-date" :label "Date"}
+   [ui/initial-focus-wrapper
+    [ui/date-selector {:class "form-control input-sm"
+                       :form  form
+                       :path  [:transaction models.transaction/date]}]]])
 
 (defmethod property-editor "Account"
   [form _]
-  ; FIXME
-  [ui/account-selector {:class "form-control input-sm"
-                        :form  form
-                        :path  [:main-split models.split/account-id]}])
+  [editor-wrapper {:label-for "transaction-account" :label "Account"}
+   [ui/account-selector {:class "form-control input-sm"
+                         :form  form
+                         :path  [:main-split models.split/account-id]}]])
 
 (defmethod property-editor "Payee"
   [form _]
-  [ui/payee-selector {:class "form-control input-sm"
-                      :form  form
-                      :path  [:transaction models.transaction/payee-id]}])
+  [editor-wrapper {:label-for "transaction-payee" :label "Payee"}
+   [ui/payee-selector {:class "form-control input-sm"
+                       :form  form
+                       :path  [:transaction models.transaction/payee-id]}]])
 
 (defmethod property-editor "Category"
   [form _ split-path]
-  [ui/account-selector {:class "form-control input-sm"
-                        :form  form
-                        :path  (conj split-path models.split/account-id)}])
+  [editor-wrapper {:label-for "split-category" :label "Category"}
+   [ui/account-selector {:class "form-control input-sm"
+                         :form  form
+                         :path  (conj split-path models.split/account-id)}]])
 
 (defmethod property-editor "Memo"
   [form _ split-path]
-  (let [path (conj split-path models.split/memo)]
-    [:input {:class       "form-control input-sm"
-             :type        "text"
-             :placeholder "Memo"
-             :value       (get-in @form path)
-             :on-change   (ui/input-change-fn form path)}]))
+  [editor-wrapper {:label-for "split-memo" :label "Memo"}
+   (let [path (conj split-path models.split/memo)]
+     [:input {:class       "form-control input-sm"
+              :type        "text"
+              :placeholder "Memo"
+              :value       (get-in @form path)
+              :on-change   (ui/input-change-fn form path)}])])
 
 (defmethod property-editor "Amount"
   [form _ split-path]
-  (let [path (conj split-path models.split/amount)]
-    [:input {:class       "form-control input-sm"
-             :type        "number"
-             :placeholder "Amount"
-             :value       (get-in @form path)
-             :on-change   (ui/input-change-fn form path)}]))
+  [editor-wrapper {:label-for "split-amount" :label "Amount"}
+   (let [path (conj split-path models.split/amount)]
+     [:input {:class       "form-control input-sm"
+              :type        "number"
+              :placeholder "Amount"
+              :value       (get-in @form path)
+              :on-change   (ui/input-change-fn form path)}])])
 
 (defn- create-editors
   [{:keys [form columns root-path]
     :or   {root-path []}}]
   (doall (for [column columns]
            ^{:key (:name column)}
-           [:div.buckit--ledger-editor-input
-            {:class (column-class column)}
+           [:div.buckit--ledger-editor
+            {:class (column-class max-column-width ; editors are full width on mobile
+                                  (:width-normal column))}
             (property-editor form column root-path)])))
 
 (defn- editor-toolbar

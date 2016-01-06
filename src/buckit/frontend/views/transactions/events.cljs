@@ -56,3 +56,12 @@
       (swap! form assoc
              :pending-query query-id
              :error         nil))))
+
+(defn new-account-chosen-fn
+  [context]
+  (fn [e]
+    (.preventDefault e)
+    (let [account-id  (-> e .-target .-value)
+          new-context (assoc context :account-id account-id)]
+      (routes/go-to (routes/transactions-url
+                      {:query-params (ctx/->url-params new-context)})))))

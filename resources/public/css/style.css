@@ -70,6 +70,14 @@ body {
 }
 
 /*
+ * Remove the gutters within each editor row. Otherwise things get too spaced
+ * out
+ */
+.buckit--transactions-toolbar > div {
+    padding: 0;
+}
+
+/*
  * Ledger
  */
 .buckit--ledger span {

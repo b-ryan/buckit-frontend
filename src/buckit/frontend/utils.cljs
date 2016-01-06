@@ -6,12 +6,20 @@
   [k objs]
   (zipmap (map k objs) objs))
 
-(defn filter-map-by-v
+(defn- map-comp
+  [comp-f m user-f]
+  {:pre [(fn? comp-f) (map? m) (fn? user-f)]}
+  (into {} (comp-f (fn [[k v]] (user-f v)) m)))
+
+(def filter-map-by-v
   "Filters a map and returns a map. Only the values will be passed into the
   filter function."
-  [m f]
-  {:pre [(fn? f) (map? m)]}
-  (into {} (filter (fn [[k v]] (f v)) m)))
+  (partial map-comp filter))
+
+(def remove-map-by-v
+  "Filters a map and returns a map. Only the values will be passed into the
+  remote function."
+  (partial map-comp remove))
 
 (defn spy
   ([x]
@@ -19,6 +27,12 @@
   ([desc x]
    (js/console.log (str "spy results [" desc "] : ") (clj->js x))
    x))
+
+(defn either-fn
+  [a-fn b-fn]
+  (fn [& args]
+    (or (apply a-fn args)
+        (apply b-fn args))))
 
 (defn nil-or-?
   [x what?]

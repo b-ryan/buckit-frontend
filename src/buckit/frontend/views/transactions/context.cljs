@@ -50,7 +50,7 @@
                     :selected-transaction-id :id
                     :edit?                   :edit})
       (select-keys #{:account_id :id :edit})
-      (utils/filter-map-by-v some?)))
+      (utils/remove-map-by-v #(empty? (str %)))))
 
 (defn <-url-params
   [url-params]

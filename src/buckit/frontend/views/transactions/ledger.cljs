@@ -156,23 +156,23 @@
 (defmethod property-editor "Account"
   [form _]
   [editor-wrapper {:label-for "transaction-account" :label "Account"}
-   [ui/account-selector {:class "form-control input-sm"
-                         :form  form
-                         :path  [:main-split models.split/account-id]}]])
+   [ui/account-editor {:class "form-control input-sm"
+                       :form  form
+                       :path  [:main-split models.split/account-id]}]])
 
 (defmethod property-editor "Payee"
   [form _]
   [editor-wrapper {:label-for "transaction-payee" :label "Payee"}
-   [ui/payee-selector {:class "form-control input-sm"
-                       :form  form
-                       :path  [:transaction models.transaction/payee-id]}]])
+   [ui/payee-editor {:class "form-control input-sm"
+                     :form  form
+                     :path  [:transaction models.transaction/payee-id]}]])
 
 (defmethod property-editor "Category"
   [form _ split-path]
   [editor-wrapper {:label-for "split-category" :label "Category"}
-   [ui/account-selector {:class "form-control input-sm"
-                         :form  form
-                         :path  (conj split-path models.split/account-id)}]])
+   [ui/account-editor {:class "form-control input-sm"
+                       :form  form
+                       :path  (conj split-path models.split/account-id)}]])
 
 (defmethod property-editor "Memo"
   [form _ split-path]

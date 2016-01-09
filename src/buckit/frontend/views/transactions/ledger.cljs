@@ -58,9 +58,9 @@
                                   (:width-normal column))}
       (:name column)])])
 
-; ----------------------------------------------------------------------------
-;     READ ONLY
-; ----------------------------------------------------------------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;    READ ONLY
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti property-display (fn [_ _ column] (:name column)))
 
 (defmethod property-display "Date"
@@ -94,7 +94,7 @@
            (models.account/name)))))
 
 (defmethod property-display "Memo"
-  ; FIXME
+  ;; FIXME
   [& _]
   "")
 
@@ -113,7 +113,7 @@
   (let [amount (:amount (ctx/main-split context transaction))]
     [:span {:class (amount-glyphicon amount)
             :aria-hidden true}
-     ; FIXME other currencies?
+     ;; FIXME other currencies?
      (str " $" (js/Math.abs amount))]))
 
 (defn- read-only-row
@@ -134,9 +134,9 @@
                                          (:width-normal column))}
                    (property-display context transaction column)]))]))))
 
-; ----------------------------------------------------------------------------
-;     EDITOR
-; ----------------------------------------------------------------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;    EDITOR
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn editor-wrapper
   [{:keys [label-for label]} content]
   [:div.row.form-group
@@ -237,9 +237,9 @@
         other-splits    (ctx/other-splits context transaction)
         form            (reagent/atom {:transaction   transaction
                                        :main-split    main-split
-                                       ; For some reason, this doesn't work unless
-                                       ; it's a vector. I would guess it's because
-                                       ; (get-in (list 1) [0]) => nil
+                                       ;; For some reason, this doesn't work unless
+                                       ;; it's a vector. I would guess it's because
+                                       ;; (get-in (list 1) [0]) => nil
                                        :other-splits  (vec other-splits)
                                        :pending-query nil
                                        :msg           {}})
@@ -250,12 +250,12 @@
         non-splits-cols (non-splits-columns columns)]
     (fn
       [& _] ; normally you should match the arguments to the parent-level fn,
-            ; but here we intentionally want the variables from the parent
-            ; level to be in this closure.
+            ;; but here we intentionally want the variables from the parent
+            ;; level to be in this closure.
       (let [pending-query (:pending-query @form)
             query-result  (when pending-query (get @queries pending-query))]
 
-        ; FIXME move to another fn
+        ;; FIXME move to another fn
         (when (and pending-query (db.query/complete? query-result))
           (js/setTimeout (fn [] (swap! form assoc
                                        :pending-query nil
@@ -281,9 +281,9 @@
                           :save-fn       save-fn
                           :show-spinner? pending-query}]]))))
 
-; ----------------------------------------------------------------------------
-;     LEDGER
-; ----------------------------------------------------------------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;    LEDGER
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- ledger-row
   [{:keys [context transaction columns new-transaction?]
     :or   {transaction (ctx/new-transaction context)}}]
@@ -305,32 +305,32 @@
       (js/console.log "in ledger, context:" (clj->js context))
       (let [query            (ctx/transactions-query context)
             query-result     (get @queries (:query-id query))
-            ; TODO below could be more efficient using subscriptions or reactions
+            ;; TODO below could be more efficient using subscriptions or reactions
             transactions     (->> @transactions
                                   (vals)
                                   (ctx/filter-transactions context)
                                   (sort-by models.transaction/date))
             columns          (ctx/get-columns context)]
         (cond
-          ; -----------------------------------------------------------------
-          ; NO QUERY
-          ; -----------------------------------------------------------------
+          ;; -----------------------------------------------------------------
+          ;; NO QUERY
+          ;; -----------------------------------------------------------------
           (nil? query-result)
           (do (js/setTimeout #(dispatch [:http-request query]))
               [:div.buckit--spinner])
-          ; -----------------------------------------------------------------
-          ; PENDING QUERY
-          ; -----------------------------------------------------------------
+          ;; -----------------------------------------------------------------
+          ;; PENDING QUERY
+          ;; -----------------------------------------------------------------
           (db.query/pending? query-result)
           [:div.buckit--spinner]
-          ; -----------------------------------------------------------------
-          ; FAILED QUERY
-          ; -----------------------------------------------------------------
+          ;; -----------------------------------------------------------------
+          ;; FAILED QUERY
+          ;; -----------------------------------------------------------------
           (db.query/failed? query-result)
           [:div [:p.text-danger i18n/transactions-not-loaded-error]]
-          ; -----------------------------------------------------------------
-          ; SUCCESSFUL QUERY
-          ; -----------------------------------------------------------------
+          ;; -----------------------------------------------------------------
+          ;; SUCCESSFUL QUERY
+          ;; -----------------------------------------------------------------
           (db.query/successful? query-result)
           [:div.buckit--ledger
            [header columns]

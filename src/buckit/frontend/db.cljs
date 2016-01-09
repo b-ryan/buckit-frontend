@@ -21,17 +21,17 @@
 
 
 (defn get-resources
-  [db model]
-  {:pre [(models/valid-model? model)]}
-  (get-in db [resources model] {}))
+  [db model-type]
+  {:pre [(models/valid-model-type? model-type)]}
+  (get-in db [resources model-type] {}))
 
 (defn inject-resources
-  [db model objs]
-  {:pre [(models/valid-model? model)
+  [db model-type objs]
+  {:pre [(models/valid-model-type? model-type)
          (sequential? objs)]}
   (js/console.log (str (count objs) " object(s) being added to resource "
-                       model))
-  (update-in db [resources model]
+                       model-type))
+  (update-in db [resources model-type]
              merge (utils/index-by-key models/id objs)))
 
 (defn update-query

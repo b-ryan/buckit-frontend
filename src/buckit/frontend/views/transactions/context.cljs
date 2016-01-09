@@ -143,18 +143,18 @@
 
 (defmethod transactions-query :no-account
   [_]
-  {:query-id [:load-transactions]
-   :method   :get-many
-   :resource models/transactions})
+  {:query-id   [:load-transactions]
+   :method     :get-many
+   :model-type models/transactions})
 
 (defmethod transactions-query :single-account
   [{:keys [account-id]}]
-  {:query-id [:load-transactions account-id]
-   :method   :get-many
-   :resource models/transactions
-   :args     [{:filters [{:name "splits__account_id"
-                          :op   "any"
-                          :val  account-id}]}]})
+  {:query-id   [:load-transactions account-id]
+   :method     :get-many
+   :model-type models/transactions
+   :args       [{:filters [{:name "splits__account_id"
+                            :op   "any"
+                            :val  account-id}]}]})
 
 ; ----------------------------------------------------------------------------
 (defmulti filter-transactions mode)

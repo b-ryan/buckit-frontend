@@ -16,12 +16,12 @@
 (register-handler
   :initialize-db
   (fn [& _]
-    (dispatch [:http-request {:query-id :all-accounts
-                              :method   :get-many
-                              :resource models/accounts}])
-    (dispatch [:http-request {:query-id :all-payees
-                              :method   :get-many
-                              :resource models/payees}])
+    (dispatch [:http-request {:query-id   :all-accounts
+                              :method     :get-many
+                              :model-type models/accounts}])
+    (dispatch [:http-request {:query-id   :all-payees
+                              :method     :get-many
+                              :model-type models/payees}])
     buckit.db/initial-state))
 
 (register-handler
@@ -33,20 +33,20 @@
 
 (register-handler
   :http-request
-  (fn [db [_ {:keys [query-id method resource args]
+  (fn [db [_ {:keys [query-id method model-type args]
               :or   {args []}
               :as   query}]]
     {:pre [(some? query-id)
            (backend/valid-method? method)
-           (models/valid-model? resource)
+           (models/valid-model-type? model-type)
            (sequential? args)]}
-    (go (let [response (<! (apply backend/request method resource args))]
+    (go (let [response (<! (apply backend/request method model-type args))]
           (dispatch [:http-complete (assoc query :response response)])))
     (buckit.db/update-query db query-id #(db.query/create-pending query-id))))
 
 (register-handler
   :http-complete
-  (fn [db [_ {:keys [query-id method resource response]
+  (fn [db [_ {:keys [query-id method model-type response]
               :as   query}]]
     (let [body (:body response)
           objs (if (backend/returns-many? method)
@@ -54,5 +54,5 @@
                  [body])
           db   (buckit.db/update-query db query-id db.query/set-complete response)]
       (if (:success response)
-        (buckit.db/inject-resources db resource objs)
+        (buckit.db/inject-resources db model-type objs)
         db))))

@@ -27,34 +27,34 @@
     {}))
 
 (defn get-many
-  [resource & [q-filter]]
-  (http/get (str base-url (name resource))
+  [model-type & [q-filter]]
+  (http/get (str base-url (name model-type))
             {:with-credentials? false
              :query-params (q-filter->query-param q-filter)}))
 
 (defn get-one
-  [resource id]
-  (http/get (str base-url (name resource) "/" id)
+  [model-type id]
+  (http/get (str base-url (name model-type) "/" id)
             {:with-credentials? false}))
 
 (defn post
-  [resource body]
+  [model-type body]
   {:pre [(some? body) (nil? (models/id body))]}
-  (http/post (str base-url (name resource))
+  (http/post (str base-url (name model-type))
              {:with-credentials? false
               :json-params body}))
 
 (defn put
-  [resource body]
+  [model-type body]
   {:pre [(some? body) (some? (models/id body))]}
-  (http/put (str base-url (name resource) "/" (models/id body))
+  (http/put (str base-url (name model-type) "/" (models/id body))
             {:with-credentials? false
              :json-params body}))
 
 (defn save
-  [resource body]
+  [model-type body]
   (let [method (if (models/id body) put post)]
-    (method resource body)))
+    (method model-type body)))
 
 (defmulti request (fn [method & _] method))
 

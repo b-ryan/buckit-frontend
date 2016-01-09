@@ -48,10 +48,10 @@
                           :transaction
                           (assoc :splits splits))
           query-id    [:save-transaction (cljs.core/random-uuid)]
-          query       {:query-id query-id
-                       :method   :save
-                       :resource models/transactions
-                       :args     [transaction]}]
+          query       {:query-id   query-id
+                       :method     :save
+                       :model-type models/transactions
+                       :args       [transaction]}]
       (dispatch [:http-request query])
       (swap! form assoc
              :pending-query query-id

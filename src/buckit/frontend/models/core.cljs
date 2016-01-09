@@ -14,9 +14,9 @@
 (def splits       :splits)
 (def transactions :transactions)
 
-(defn valid-model?
-  [resource]
-  (contains? #{accounts payees splits transactions} resource))
+(defn valid-model-type?
+  [model-type]
+  (contains? #{accounts payees splits transactions} model-type))
 
 (defn account-in-splits?
   "Returns true if any of the splits for the given transaction have the account

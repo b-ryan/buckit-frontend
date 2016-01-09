@@ -6,6 +6,10 @@
 (def memo           :memo)
 (def primary-split? :is_primary_split)
 
+;; These properties are not always set on the split. But they can be used when
+;; saving splits in order to save changes to the properties transactionally.
+(def account        :account)
+
 (defn split-for-account
   [splits _account-id]
   (first (filter #(= (account-id %) _account-id) splits)))

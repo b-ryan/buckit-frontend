@@ -156,9 +156,10 @@
 (defmethod property-editor "Account"
   [form _]
   [editor-wrapper {:label-for "transaction-account" :label "Account"}
-   [ui/account-editor {:class "form-control input-sm"
-                       :form  form
-                       :path  [:main-split models.split/account-id]}]])
+   [ui/account-editor {:class       "form-control input-sm"
+                       :form        form
+                       :path        [:main-split models.split/account-id]
+                       :placeholder "Account"}]])
 
 (defmethod property-editor "Payee"
   [form _]
@@ -170,9 +171,10 @@
 (defmethod property-editor "Category"
   [form _ split-path]
   [editor-wrapper {:label-for "split-category" :label "Category"}
-   [ui/account-editor {:class "form-control input-sm"
-                       :form  form
-                       :path  (conj split-path models.split/account-id)}]])
+   [ui/account-editor {:class       "form-control input-sm"
+                       :form        form
+                       :path        (conj split-path models.split/account-id)
+                       :placeholder "Category"}]])
 
 (defmethod property-editor "Memo"
   [form _ split-path]
@@ -182,7 +184,7 @@
               :type        "text"
               :placeholder "Memo"
               :value       (get-in @form path)
-              :on-change   (ui/input-change-fn form path)}])])
+              :on-change   (ui/update-form-fn form path)}])])
 
 (defmethod property-editor "Amount"
   [form _ split-path]
@@ -192,7 +194,7 @@
               :type        "number"
               :placeholder "Amount"
               :value       (get-in @form path)
-              :on-change   (ui/input-change-fn form path)}])])
+              :on-change   (ui/update-form-fn form path)}])])
 
 (defn- create-editors
   [{:keys [form columns root-path]

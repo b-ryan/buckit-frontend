@@ -9,7 +9,7 @@
   (with-meta identity
     {:component-did-mount #(.focus (reagent/dom-node %))}))
 
-(defn input-change-fn
+(defn update-form-fn
   [form path]
   (fn [e]
     (swap! form assoc-in path (-> e .-target .-value))))
@@ -22,13 +22,32 @@
     :type        "text"
     :placeholder "Date"
     :value       (get-in @form path)
-    :on-change   (input-change-fn form path)}])
+    :on-change   (update-form-fn form path)}])
+
+(defn autocomplete
+  [{:keys [items display-fn] :as opts}]
+  (reagent/create-class
+    {:reagent-render
+     (fn
+       [{:keys [class value on-change placeholder]
+         :as   opts}]
+       [:input {:class       class
+                :type        "text"
+                :on-change   on-change
+                :placeholder placeholder}])
+
+     :component-did-mount
+     (fn
+       [this]
+       (.autocomplete (js/$ (reagent/dom-node this))
+                      (clj->js {:source (map display-fn items)})))}))
 
 (defn account-selector
   [opts]
   (let [accounts (subscribe [:accounts])]
     (fn
-      [{:keys [class value on-change]}]
+      [{:keys [class value on-change]
+        :as   opts}]
       [:select
        {:class     class
         :type      "text"
@@ -41,29 +60,27 @@
                 (models.account/name account)]))])))
 
 (defn account-editor
-  [{:keys [form path] :as opts}]
-  [account-selector (assoc opts
-                           :value     (get-in @form path)
-                           :on-change (input-change-fn form path))])
+  [opts]
+  (let [accounts (subscribe [:accounts])]
+    (fn
+      [{:keys [class form path placeholder]
+        :as   opts}]
+      [autocomplete {:class       class
+                     :value       (get-in @form path)
+                     :on-change   (update-form-fn form path)
+                     :placeholder placeholder
+                     :items       (vals @accounts)
+                     :display-fn  models.account/name}])))
 
-(defn payee-selector
+(defn payee-editor
   [opts]
   (let [payees (subscribe [:payees])]
     (fn
-      [{:keys [class value on-change]}]
-      [:select
-       {:class     class
-        :type      "text"
-        :value     value
-        :on-change on-change}
-       (into (list ^{:key :empty} [:option])
-             (for [[payee-id payee] @payees]
-               ^{:key payee-id}
-               [:option {:key payee-id :value payee-id}
-                (models.payee/name payee)]))])))
-
-(defn payee-editor
-  [{:keys [form path] :as opts}]
-  [payee-selector (assoc opts
-                         :value     (get-in @form path)
-                         :on-change (input-change-fn form path))])
+      [{:keys [class form path]
+        :as   opts}]
+      [autocomplete {:class       class
+                     :value       (get-in @form path)
+                     :on-change   (update-form-fn form path)
+                     :placeholder "Payee"
+                     :items       (vals @payees)
+                     :display-fn  models.payee/name}])))
